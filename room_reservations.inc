@@ -160,7 +160,7 @@ function _room_reservations_dates($selected_month = NULL, $selected_day = NULL, 
     $advancedaysmax = user_access('create room reservations extended') 
       ? variable_get('room_reservations_advance_extended', 180) 
       : variable_get('room_reservations_advance_standard', 14);
-    $advancedaysmin = user_access('bypass minimum advance booking') ? 0 : $room['advmin'];
+    $advancedaysmin = user_access('bypass minimum advance booking') ? 0 : $room['field_reservations_minadvbooking'][LANGUAGE_NONE][0]['value'];
     for ($j = $advancedaysmin; $j < $advancedaysmax; $j++) {
       $day = array();
       $day['display'] = date("l, n/j", strtotime("now + " . $j . " days"));
@@ -829,7 +829,7 @@ function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $a
   // need to limit these valid lengths by a prebuffer if it exists for the room
   // but only if not permissions to do this
   if (!user_access('book over buffer')) {
-    $preslots = $rooms[$rid]['prebuffer'] / 30;
+    $preslots = $rooms[$rid]['field_reservations_prebuffer'] / 30;
     if ($preslots) {
       foreach ($valid_lengths as $index => $length) {
         if ($length['is_valid'] == false) {

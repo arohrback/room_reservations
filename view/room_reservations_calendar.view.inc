@@ -49,9 +49,8 @@ function theme_room_reservations($variables) {
   global $base_secure_url;
   global $base_root;
     
-  // to support minimum adv booking per category; let's get available dates per cat
+  // to support minimum adv booking per room; let's get available dates per room
   $datesperroom = _room_reservations_dates(null, null, true);
-  
   // pass date format to JS
   $format = strtolower(variable_get('room_reservations_picker_format', 'y/m/d'));
   drupal_add_js(array('room_reservations' => array('dateformat' => $format)), 'setting');
@@ -207,15 +206,13 @@ function theme_room_reservations($variables) {
           
           // lets use slot class from reservation if it is set
           $slotclass = isset($reservations[$rid][$time_slot['time']]['class']) ? $reservations[$rid][$time_slot['time']]['class'] : $time_slot['class'];
-          
-          // to support min adv booking per cat; let's simply mark all slots as closed for dates not availble to this user for this cat
+          // to support min adv booking per room; let's simply mark all slots as closed for dates not availble to this user for this room
           if (!isset($datesperroom[$rid][$yyyymmdd])) {
             $open = false; 
           }
           
           // Determine if the building is open or closed for this time slot.
           if ($open) {
-            //$booked_class = ($reservations[$rid][$time]['booked']) ? 'booked' : $unbooked_class;
             $booked_class = ($reservations[$rid][$time]['booked']) ? '' : $unbooked_class;
           }
           else {
