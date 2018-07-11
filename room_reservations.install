@@ -4,7 +4,6 @@
  * Implements hook_schema().
  *
  *   Required Nodes (TODO use Entities:
- *      - room category (possibly should be a taxonomy)
  *      - room
  *      - reservation 
  * 
@@ -40,6 +39,51 @@ function room_reservations_schema() {
   return $schema;
 }
 
+function room_reservations_enable() {
+  
+  // Ensure our content types are available.
+  node_types_rebuild();
+  $types = node_type_get_types();
+  
+  // Add body fields to room and reservation types.
+  node_add_body_field($types['room_reservations_room'], t('Description'));
+  node_add_body_field($types['room_reservations_reservation'], t('Details'));
+  
+  // Add our custom fields.
+  foreach (_room_reservations_installed_fields() as $field) {
+    field_create_field($field);
+  }
+  // Create all the instances for our fields.
+  foreach (_room_reservations_installed_instances_room() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = 'room_reservations_room';
+    field_create_instance($instance);
+  } 
+  foreach (_room_reservations_installed_instances_reservation() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = 'room_reservations_reservation';
+    field_create_instance($instance);
+  } 
+  
+  // Add taxonomies for conference rooms.
+  if (taxonomy_vocabulary_machine_name_load('conference_room_equipment') == FALSE) {
+    $equip_vocab = (object) array(
+      'name' => 'Conference Room Equipment',
+      'description' => 'Equipment that may be available in conference rooms',
+      'machine_name' => 'conference_room_equipment',
+    );
+    taxonomy_vocabulary_save($equip_vocab);
+  }
+  if (taxonomy_vocabulary_machine_name_load('conference_room_types') == FALSE) {
+    $room_type_vocab = (object) array(
+      'name' => 'Conference Room Types',
+      'description' => 'Types of conference rooms; replaces Category content type',
+      'machine_name' => 'conference_room_types',
+    );
+    taxonomy_vocabulary_save($room_type_vocab);
+  }
+}
+
 /**
 * The information that the module should remove includes:
 *
@@ -53,15 +97,8 @@ function room_reservations_schema() {
 */
 function room_reservations_uninstall() {
   module_load_include('inc', 'room_reservations', 'room_reservations.node');   
-  // remove reservation types
-  $types = array_keys(room_reservations_node_info());
-  foreach ($types as $type) {
-    node_type_delete($type);
-  }
   // remove our custom fields - this means all RR content will be removed including room nodes
-  $fields = array_keys(_room_reservations_installed_fields_category());
-  $fields += array_keys(_room_reservations_installed_fields_room());
-  $fields += array_keys(_room_reservations_installed_fields_reservation());
+  $fields = array_keys(_room_reservations_installed_fields());
   foreach ($fields as $field) {
     field_delete_field($field);
   }

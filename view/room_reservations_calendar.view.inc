@@ -50,7 +50,7 @@ function theme_room_reservations($variables) {
   global $base_root;
     
   // to support minimum adv booking per category; let's get available dates per cat
-  $datespercat = _room_reservations_dates(null, null, true);
+  $datesperroom = _room_reservations_dates(null, null, true);
   
   // pass date format to JS
   $format = strtolower(variable_get('room_reservations_picker_format', 'y/m/d'));
@@ -131,8 +131,8 @@ function theme_room_reservations($variables) {
     // @todo: use JS to set active based on anchor
     $active = ($i == 0) ? " class='active'" : "";
     $i++;
-    $id = strtolower(preg_replace('/[^a-zA-Z0-9-]+/', '-', $category['title']));
-    $output .= '<li><a' . $active . " href='#" . $id . "'>" . $category['title'] . '</a></li>';
+    $id = strtolower(preg_replace('/[^a-zA-Z0-9-]+/', '-', $category->name));
+    $output .= '<li><a' . $active . " href='#" . $id . "'>" . $category->name . '</a></li>';
   }
   
   // Panel container.
@@ -151,9 +151,9 @@ function theme_room_reservations($variables) {
       $i++;
     }
     else {
-      $show = (!empty($variables['selected_category']) && $category['title'] == $variables['selected_category']) ? 'show' : 'hide';
+      $show = (!empty($variables['selected_category']) && $category->name == $variables['selected_category']) ? 'show' : 'hide';
     }
-    $id = strtolower(preg_replace('/[^a-zA-Z0-9-]+/', '-', $category['title']));
+    $id = strtolower(preg_replace('/[^a-zA-Z0-9-]+/', '-', $category->name));
     $r = 0; $c = 0;
     
     // Date and building hours.
@@ -182,7 +182,7 @@ function theme_room_reservations($variables) {
     $rooms_per_category = 0;
     foreach ($rooms as $room) {
       $rid = $room['nid'];
-      if (!empty($room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id']) && $room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id'] == $category['nid']) {
+      if (!empty($room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id']) && $room['field_reservations_room_category'][LANGUAGE_NONE][0]['tid'] == $category->tid) {
         $rooms_per_category++;
       }
     }
@@ -193,7 +193,7 @@ function theme_room_reservations($variables) {
       $room_name = $room['title'];
       $room_link = l($room_name, 'node/' . $rid);
 
-      if ($room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id'] == $category['nid']) {
+      if ($room['field_reservations_room_category'][LANGUAGE_NONE][0]['tid'] == $category->tid) {
         $c++; $r = 0;
         // Room name, capacity.
         $table[$r][$c] = '<li class="room-info">' . $room_link . '</li>';
@@ -209,7 +209,7 @@ function theme_room_reservations($variables) {
           $slotclass = isset($reservations[$rid][$time_slot['time']]['class']) ? $reservations[$rid][$time_slot['time']]['class'] : $time_slot['class'];
           
           // to support min adv booking per cat; let's simply mark all slots as closed for dates not availble to this user for this cat
-          if (!isset($datespercat[$category['nid']][$yyyymmdd])) {
+          if (!isset($datesperroom[$rid][$yyyymmdd])) {
             $open = false; 
           }
           

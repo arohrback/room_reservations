@@ -5,260 +5,6 @@
  */
 
 /**
- * Reservation class represents a single reservation.
- */
-class Reservation {
-
-  /**
-   * The key of the record in the room_reservations database table.
-   *
-   * @var int
-   */
-  public $id;
-
-  /**
-   * Indicates if the record has been deleted.  'Y' = deleted.  'N' = not
-   * deleted.
-   *
-   * @var string
-   */
-  public $deleted;
-
-  /**
-   * The date for which the reservation has been made, in format YYYY-MM-DD.
-   *
-   * @var string
-   */
-  public $date;
-
-  /**
-   * The time at which the reservation begins, in format 9999 (0000-2330).
-   *
-   * @var string
-   */
-  public $time;
-
-  /**
-   * The length of time of the reservation, in minutes.
-   *
-   * @var int
-   */
-  public $length;
-
-  /**
-   * The name of the room being reserved.
-   *
-   * @var string
-   */
-  public $room;
-
-  /**
-   * The name assigned by the user to identify the reservation on the
-   * reservation calendar.
-   *
-   * @var string
-   */
-  public $name;
-
-  /**
-   * The number of persons who will be using the room.
-   *
-   * @var int
-   */
-  public $groupSize;
-
-  /**
-   * The Drupal user name of the person who made the reservation.
-   *
-   * @var string
-   */
-  public $userName;
-
-  /**
-   * Indicates if the user has selected to receive confirmation and reminder
-   * messages by SMS message.  'Y' indicates receive messages by SMS.  'N'
-   * indicates do not receive messages by SMS.
-   *
-   * @var string
-   */
-  public $textmsg;
-
-  /**
-   * The id of the record in the room_reservations_variables table that
-   * contains information about the user's selected SMS carrier.
-   *
-   * @var int
-   */
-  public $carrier;
-
-  /**
-   * The phone number to which the SMS messages are sent for this
-   * reservation, if this option for receiving messages has been selected by the
-   * user, in the format 9999999999.
-   *
-   * @var string
-   */
-  public $phone;
-
-  /**
-   * One or more email addresses to receive confirmation and reminder
-   * messages for this reservation, if this option for receiving messages
-   * has been selected by the user.
-   *
-   * @var string
-   */
-  public $emailAddresses;
-
-  /**
-   * The date and time the reservation was created, in the format
-   * YYYY-MM-DD HH:MM:SS.
-   *
-   * @var string
-   */
-  public $createDate;
-
-  /**
-   * The last date and time the reservation was updated, in the format
-   * YYYY-MM-DD HH:MM:SS.  If the reservation has not been updated, will
-   * contain '0000-00-00 00:00:00'.
-   *
-   * @var string
-   */
-  public $updateDate;
-
-  /**
-   * The date and time a reminder was sent for this reservation, in the format
-   * YYYY-MM-DD HH:MM:SS.  If no reminder has been sent, will
-   * contain '0000-00-00 00:00:00'.
-   *
-   * @var string
-   */
-  public $reminderDate;
-
-  /**
-   * The number of persons who can use the room being reserved.
-   *
-   * @var int
-   */
-  public $roomCapacity;
-
-  /**
-   * The month number of the date of the reservation.
-   *
-   * @var int
-   */
-  public $monthNumber;
-
-  /**
-   * The day of the month of the date of the reservation.
-   *
-   * @var int
-   */
-  public $day;
-
-  /**
-   * The year of the date of the reservation.
-   *
-   * @var int
-   */
-  public $year;
-
-  /**
-   * A user friendly display of the date of the reservation.
-   *
-   * @var string
-   */
-  public $displayDate;
-
-  /**
-   * A user friendly display of the time of the reservation.
-   *
-   * @var type
-   */
-  public $displayTime;
-
-  /**
-   * The category to which the reserved room belongs.
-   *
-   * @var string
-   */
-  public $roomCategory;
-
-  /**
-   * Possible lengths of time that would be allowed for a reservation
-   * starting on the date and time of this reservation.
-   *
-   * @var array
-   */
-  public $validLengths;
-
-  /**
-   * Constructor for a reservation object.
-   *
-   * @param int $id
-   *   (optional) The key of the record in the room_reservations database table,
-   *   if the record already exists.
-   */
-  public function __construct($id = NULL) {
-    if ($id) {
-      $sql = "SELECT * FROM {room_reservations} WHERE id = :id AND deleted = 'N'";
-      $record_count = 0;
-      $results = db_query($sql, array(':id' => $id));
-      foreach ($results as $data) {
-        $this->id = $id;
-        $this->date = $data->date;
-        $this->time = $data->time;
-        $this->length = $data->length;
-        $this->room = $data->room;
-        $this->name = $data->name;
-        $this->groupSize = $data->group_size;
-        $this->userName = $data->user_name;
-        $this->emailAddresses = $data->email_addresses;
-        $this->textmsg = $data->textmsg;
-        $this->carrier = $data->carrier;
-        $this->phone = $data->phone;
-        $record_count++;
-      }
-    }
-  }
-}
-
-/**
- * Create an array of all the room categories.
- *
- * @return array
- *   An array representing all the room categories.
- */
-function _room_reservations_categories() {
-  $categories = array();
-  $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'room_reservations_category') 
-    // this partially makes sense - do not show Categories which are unpublished
-    // issue will be that Rooms maybe be published with categories that aren't.. which will be a mess
-    //->propertyCondition('status', NODE_PUBLISHED)  
-    
-    // dangerous as this does more than Order By as it does not include records which do not have this field set
-    // so let's make sure the Order field is REQUIRED
-    ->fieldOrderBy('field_reservations_display_order', 'value', 'ASC');
-  $result = $query->execute();
-  if (isset($result['node'])) {
-    $cids = array_keys($result['node']);
-    $cat_objs = node_load_multiple($cids);
-    foreach ($cat_objs as $cat) {
-      $categories[$cat->nid] = array(
-        'nid' => $cat->nid,
-        'title' => check_plain($cat->title),
-        'advmin' => isset($cat->field_reservations_minadvbooking[LANGUAGE_NONE][0]['value']) ? $cat->field_reservations_minadvbooking[LANGUAGE_NONE][0]['value'] : 0,
-        'prebuffer' => $cat->field_reservations_prebuffer[LANGUAGE_NONE][0]['value'],
-        'postbuffer' => $cat->field_reservations_postbuffer[LANGUAGE_NONE][0]['value'],
-      );  
-    }
-  }
-  return $categories;
-}
-
-/**
  * Retrieve all the rooms from the database.
  *
  * @return array
@@ -408,13 +154,13 @@ function _room_reservations_create_mo_hours($year, $month, $yyyy_mm, $array = fa
  */
 function _room_reservations_dates($selected_month = NULL, $selected_day = NULL, $keyed = false) {
   // Determine date information (month, day, year, etc.) for each of these days.
-  $categories = _room_reservations_categories();
+  $rooms = _room_reservations_rooms();
   $dates = array();
-  foreach ($categories as $cat) {
+  foreach ($rooms as $room) {
     $advancedaysmax = user_access('create room reservations extended') 
       ? variable_get('room_reservations_advance_extended', 180) 
       : variable_get('room_reservations_advance_standard', 14);
-    $advancedaysmin = user_access('bypass minimum advance booking') ? 0 : $cat['advmin'];
+    $advancedaysmin = user_access('bypass minimum advance booking') ? 0 : $room['advmin'];
     for ($j = $advancedaysmin; $j < $advancedaysmax; $j++) {
       $day = array();
       $day['display'] = date("l, n/j", strtotime("now + " . $j . " days"));
@@ -447,10 +193,10 @@ function _room_reservations_dates($selected_month = NULL, $selected_day = NULL, 
       $day['today'] = (($day['month-number'] == date('m')) &&
         ($day['day'] == date('j'))) ? TRUE : FALSE;
       if ($keyed) {
-        $dates[$cat['nid']][$day['yyyymmdd']] = $day;
+        $dates[$room['nid']][$day['yyyymmdd']] = $day;
       }
       else {
-        $dates[$cat['nid']][] = $day;
+        $dates[$room['nid']][] = $day;
       }
     }
   }
@@ -648,31 +394,6 @@ function _room_reservations_facility_hours($reset = FALSE) {
   }
   return $building_hours;
 }
-
-/*
-      if ($this_day <= $dom) {
-        // This is a day in the current month.
-        $yyyymmdd_yyyy = $year;
-        $yyyymmdd_mm = $month;
-        if ($this_day < 10) {
-          $yyyymmdd_dd = '0' . $this_day;
-        }
-        else {
-          $yyyymmdd_dd = $this_day;
-        }
-      }
-      else {
-        // This is a day in the next month.
-        $yyyymmdd_yyyy = $next_month_year;
-        $yyyymmdd_mm = $next_month;
-        $next_month_day = $this_day - $dom;
-        if ($next_month_day < 10) {
-          $yyyymmdd_dd = '0' . $next_month_day;
-        }
-        else {
-          $yyyymmdd_dd = $next_month_day;
-        }
-      }*/
 
 /**
  * Creates a string for displaying the open hours for a single day.
@@ -1105,13 +826,10 @@ function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $a
       }
     }
   }
-  // need to limit these valid lengths by a prebuffer if it exists for the category this room is in
+  // need to limit these valid lengths by a prebuffer if it exists for the room
   // but only if not permissions to do this
   if (!user_access('book over buffer')) {
-    $categories = _room_reservations_categories();
-    $rooms = _room_reservations_rooms();
-    $category = $categories[$rooms[$rid]['reservations_room_category'][LANGUAGE_NONE][0]['target_id']];
-    $preslots = $category['prebuffer'] / 30;
+    $preslots = $rooms[$rid]['prebuffer'] / 30;
     if ($preslots) {
       foreach ($valid_lengths as $index => $length) {
         if ($length['is_valid'] == false) {
@@ -1181,32 +899,6 @@ function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $a
     }
   }
 
-  /*
-  // Determine if the reservation at each possible length would be the last time
-  // slot before the building closes.  If so, reduce the length of time for that
-  // time slot by 15 minutes.  All reservations must end 15 minutes before the
-  // building closes.
-  $end_early = variable_get('room_reservations_end_early', 0);
-  if ($end_early) {
-    for ($x = 0; $x < $max_slots; $x++) {
-      $valid_length = $valid_lengths[$x];
-      if ($valid_length['is_valid']) {
-        $last_time_slot = FALSE;
-        $search_item = $search_items[$x];
-        $date = $search_item['date'];
-        $start_time = $search_item['start_time'];
-        $closing_times = _room_reservations_close_times($yyyymmdd);
-        if (in_array($start_time, $closing_times)) {
-          $normal_length = $valid_length['length'];
-          $adjusted_length = $normal_length - 15;
-          $valid_length['length'] = $adjusted_length;
-          $valid_lengths[$x] = $valid_length;
-        }
-      }
-    }
-  }
-  */
-  
   return $valid_lengths;
 }
 
@@ -1241,36 +933,6 @@ function _room_reservations_daily_max_exceeded($yyyymmdd) {
   else {
     return TRUE;
   }
-}
-
-/**
- * Create friendlier error message.
- *
- * This function works with the room_reservations_res_form_validate()
- * function.  When a user is filling out the form to reserve a room, it is
- * possible that before she can submit the form, someone else will complete a
- * reservation for that same room, same date, and some of the same time.
- * If that should occur, and the user has requested a length of time that
- * is no longer available, Drupal automatically creates the following error:
- * 'An illegal choice has been detected. Please contact the site
- * administrator.'  Since this message is somewhat alarming to the user
- * and not at all informative, it is replaced in this function with a more
- * descriptive message.
- *
- * @param string $message
- *   A Drupal error message.
- *
- * @return object
- *   A string with a more user friendly message, or FALSE to indicate that
- *   no change needs to be made to the error message.
- */
-function room_reservations_rewrite_error($message) {
-  if (strpos($message, 'An illegal choice has been detected. Please contact
-      the site administrator.') !== FALSE) {
-    return t('This room is no longer available for the length of time that
-      you selected.  Please choose one of the lengths listed below.');
-  }
-  return FALSE;
 }
 
 /**
@@ -1322,81 +984,6 @@ function _room_reservations_user_reservations() {
   return $user_reservations;
 }
 
-/**
- * Get list of wireless carriers.
- *
- * Retrieve from the database all of the wireless carriers that have been
- * added to the application by the administrator.
- *
- * @return array
- *   An array representing the carriers.
- */
-function _room_reservations_carriers() {
-  $carriers = array();
-  $sql = "SELECT * FROM {room_reservations_variables} WHERE name = 'carrier' ORDER BY value";
-  $results = db_query($sql);
-  foreach ($results as $data) {
-    $carrier = explode('~', $data->value);
-    $id = $data->id;
-    $carriers[$id] = check_plain($carrier[0]);
-  }
-  return $carriers;
-}
-
-/**
- * Get a carrier's sms address.
- *
- * When sending an sms text message, obtain the sms email address of the user's
- * wireless carrier.
- *
- * @param int $carrier
- *   The user's wireless carrier, as selected on the reservation form.
- *
- * @return string
- *   The email address of the user's wireless carrier.
- */
-function _room_reservations_carrier_address($carrier) {
-  $carrier_address = '';
-  $sql = "SELECT * FROM {room_reservations_variables} WHERE name = 'carrier' ORDER BY id";
-  $results = db_query($sql);
-  foreach ($results as $data) {
-    $car = explode('~', $data->value);
-    $id = $data->id;
-    if ($id == $carrier) {
-      $carrier_address = check_plain($car[1]);
-      break;
-    }
-  }
-  return $carrier_address;
-}
-
-/**
- * Send an sms text message.
- *
- * @param string $message_type
- *   Indicates whether the message is a confirmation or a reminder.
- * @param array $params
- *   Reservation specific data to be inserted into the message template.
- */
-function _room_reservations_send_sms($message_type, $params) {
-  $carrier_address = _room_reservations_carrier_address($params['carrier']);
-  $to = $params['phone'] . $carrier_address;
-  $subject = _room_reservations_replace_tokens(check_plain(
-    _room_reservations_get_variable('confirmation_header_text_sms')), $params);
-  $day_of_week = drupal_substr($params['day_of_week'], 0, 3) . '.';
-  if ($message_type == 'confirmation') {
-    $message_body = _room_reservations_replace_tokens(check_plain(
-      _room_reservations_get_variable('confirmation_text_sms')), $params);
-  }
-  elseif ($message_type == 'reminder') {
-    $message_body = _room_reservations_replace_tokens(check_plain(
-      _room_reservations_get_variable('reminder_text_sms')), $params);
-  }
-  $message = wordwrap($message_body, 70);
-  $from = _room_reservations_get_variable('from_address_sms');
-  $headers = "From: " . $from;
-  mail($to, $subject, $message, $headers);
-}
 
 /**
  * Replace tokens in messages.
@@ -1427,38 +1014,6 @@ function _room_reservations_replace_tokens($text, $parameters) {
     $text = str_replace($key, $value, $text);
   }
   return $text;
-}
-
-/**
- * Determines the default email address added to the reservation form.
- *
- * @global object $user
- *   The user object.
- *
- * @return string
- *   Email address.
- */
-function _room_reservations_default_email() {
-  $default_option = _room_reservations_get_variable('default_email_address');
-  $default_domain = _room_reservations_get_variable('default_email_domain');
-  if (!isset($default_option)) {
-    return '';
-  }
-  elseif ($default_option == 0) {
-    return '';
-  }
-  elseif ($default_option == 1) {
-    global $user;
-    $logged_in = ($user->uid);
-    $email = ($logged_in) ? $user->name : '';
-    return $email;
-  }
-  elseif ($default_option == 2) {
-    global $user;
-    $logged_in = ($user->uid);
-    $email = ($logged_in) ? $user->name . $default_domain : '';
-    return $email;
-  }
 }
 
 /**

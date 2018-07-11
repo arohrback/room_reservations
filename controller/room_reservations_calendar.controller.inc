@@ -19,12 +19,11 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
   // likely no need for this as not used anywhere else; but maybe for external modules
   global $yyyymmdd;   
   
-  // dates are now keyed by Cat ID; but we only need anyone of these to build calendar but make sure its the one which starts earliest
-  $datesbycat = _room_reservations_dates($selected_month, $selected_day);
-  $categories = _room_reservations_categories();
+  // dates are now keyed by Room ID; but we only need anyone of these to build calendar but make sure its the one which starts earliest
+  $datesbyrid = _room_reservations_dates($selected_month, $selected_day);
   
-  // allow other modules to alter the categories
-  drupal_alter('room_reservations_categories', $categories);
+  $category_vocab = taxonomy_vocabulary_machine_name_load('conference_room_type');
+  $categories = taxonomy_get_tree($category_vocab->vid);
   
   // if no Categories left; we should not bother with the rest of this
   if (!count($categories)) {
@@ -32,9 +31,7 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
     drupal_goto();
   }
   
-  $earliest = _room_reservations_earliest_category($categories);
-  
-  $dates = $datesbycat[$earliest];
+  $dates = array_shift($datesbyrid);
   
   // Determine which day has been selected by the user. If the user has entered a url that specifies a day outside of the
   // allowable reservation window, then set the current day as the selected day.
@@ -212,9 +209,9 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
       // add in pre/post buffer for setup/takedown (rev 7.x-1.3+)
       //  - if the slot is part of buffer we add "setup" to class
       //  - if we don't have admin rights; we also mark it as booked so no one can book in these slots
-      $category = $categories[$rooms[$rid]['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id']];
-      $preslots = $category['prebuffer'] / 30;
-      $postslots = $category['postbuffer'] / 30;
+      $room = entity_metadata_wrapper('node', $rid);
+      $preslots = $room->field_reservations_prebuffer->value() / 30;
+      $postslots = $room->field_reservations_postbuffer->value() / 30;
       $startkey = array_search($reservations[$rid][$time]['time'], $times);
       $endkey = $startkey + $time_slots;
       $k = $startkey - $preslots;
@@ -323,37 +320,4 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
     'rooms' => $rooms, 
     'user_reservations' => $user_reservations));
   return $output;
-}
-
-function _room_reservations_earliest_category($categories) {
-  $earliest = 1000;
-  foreach ($categories as $cat) {
-    if ($cat['advmin'] < $earliest) {
-      $earliest = $cat['advmin'];
-      $result = $cat['nid'];
-    }
-  }  
-  return $result;
-}
-
-function _room_reservations_get_dates() {
-  // dates are now keyed by Cat ID; but we only need anyone of these to build calendar but make sure its the one which starts earliest
-  $datesbycat = _room_reservations_dates($selected_month, $selected_day);
-  $categories = _room_reservations_categories();
-  $earliest = _room_reservations_earlist_category($categories);
-  $dates = $datesbycat[$earliest];
-  
-  // Determine which day has been selected by the user. If the user has entered a url that specifies a day outside of the
-  // allowable reservation window, then set the current day as the selected day.
-  $yyyymmdd = $dates[0]['yyyymmdd'];
-  foreach ($dates as $day) {
-    if ($day['selected']) {
-      $yyyymmdd = $day['yyyymmdd'];
-    }
-  }
-  if ($yyyymmdd == $dates[0]['yyyymmdd']) {
-    $dates[0]['selected'] = TRUE;
-    $dates[0]['today'] = TRUE;
-  }
-  return $dates;
 }

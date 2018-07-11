@@ -19,7 +19,40 @@ function room_reservations_views_api($module, $api) {
     return array('version' => 2);
   }
 }
+
+function room_reservations_form($node, &$form_state) {
+  return node_content_form($node, node_type_get_type($node));
+}
     
+/**
+ * Implements hook_node_info().
+ * Establish our custom content types.
+ */
+function room_reservations_node_info() {
+  return array(
+    'room_reservations_room' => array(
+      'name' => t('Room Reservations Room'),
+      'base' => 'room_reservations',
+      'description' => t('A reservable room.'),
+      'has_title' => TRUE,
+      'title_label' => t('Name'),
+      'has_body' => TRUE,
+      'body_label' => t('Description'),
+      'locked' => TRUE,
+    ),            
+    'room_reservations_reservation' => array(
+      'name' => t('Room Reservations Reservation'),
+      'base' => 'room_reservations',
+      'description' => t('A room reservation.'),
+      'has_title' => TRUE, 
+      'title_label' => t('Meeting Name'),
+      'title_description' => t('Identifies your group on the reservation calendar.'), 
+      'has_body' => FALSE,
+      'locked' => TRUE,
+    ),        
+  );
+}
+
 /**
  * Implements hook_menu().
  */
@@ -428,10 +461,9 @@ function return_to_reservations_page($form, &$form_state) {
   
   $rid = $form_state['values']['field_reservation_room'][LANGUAGE_NONE][0]['target_id'];
   $rooms = _room_reservations_rooms();
-  $categories = _room_reservations_categories();
   $room = $rooms[$rid];
-  $catid = $room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id'];
-  $category = $categories[$catid];
+  // TODO: Load category taxonomy term and use its properties.
+  $category = array('title' => 'Category Placeholder');
   $anchor = strtolower(preg_replace('/[^a-zA-Z0-9-]+/', '-', $category['title']));
   
   // need to handle both update and delete case
