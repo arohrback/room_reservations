@@ -240,7 +240,7 @@ function _room_reservations_categories() {
     
     // dangerous as this does more than Order By as it does not include records which do not have this field set
     // so let's make sure the Order field is REQUIRED
-    ->fieldOrderBy('reservations_display_order', 'value', 'ASC');
+    ->fieldOrderBy('field_reservations_display_order', 'value', 'ASC');
   $result = $query->execute();
   if (isset($result['node'])) {
     $cids = array_keys($result['node']);
@@ -249,9 +249,9 @@ function _room_reservations_categories() {
       $categories[$cat->nid] = array(
         'nid' => $cat->nid,
         'title' => check_plain($cat->title),
-        'advmin' => isset($cat->reservations_minadvbooking[LANGUAGE_NONE][0]['value']) ? $cat->reservations_minadvbooking[LANGUAGE_NONE][0]['value'] : 0,
-        'prebuffer' => $cat->reservations_prebuffer[LANGUAGE_NONE][0]['value'],
-        'postbuffer' => $cat->reservations_postbuffer[LANGUAGE_NONE][0]['value'],
+        'advmin' => isset($cat->field_reservations_minadvbooking[LANGUAGE_NONE][0]['value']) ? $cat->field_reservations_minadvbooking[LANGUAGE_NONE][0]['value'] : 0,
+        'prebuffer' => $cat->field_reservations_prebuffer[LANGUAGE_NONE][0]['value'],
+        'postbuffer' => $cat->field_reservations_postbuffer[LANGUAGE_NONE][0]['value'],
       );  
     }
   }
@@ -269,9 +269,7 @@ function _room_reservations_rooms() {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'room_reservations_room')  
-    ->propertyCondition('status', NODE_PUBLISHED) 
-    // dangerous as this does more than Order By as it does not include records which do not have this field set
-    ->fieldOrderBy('reservations_display_order', 'value', 'ASC');
+    ->propertyCondition('status', NODE_PUBLISHED);
   $result = $query->execute();
   if (isset($result['node'])) {
     $rids = array_keys($result['node']);
@@ -1085,17 +1083,17 @@ function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $a
       $query = new EntityFieldQuery();
       $query->entityCondition('entity_type', 'node')
         ->entityCondition('bundle', 'room_reservations_reservation')   
-        ->fieldCondition('reservation_date', 'value', $date, '=')     
-        ->fieldCondition('reservation_time', 'value', $start_time, '=')         
-        ->fieldCondition('reservation_room', 'target_id', $rid, '=')
+        ->fieldCondition('field_reservation_date', 'value', $date, '=')     
+        ->fieldCondition('field_reservation_time', 'value', $start_time, '=')         
+        ->fieldCondition('field_reservation_room', 'target_id', $rid, '=')
         // EFQ respects access so let's load the reservations as user 1 to make sure we get them all
         ->addMetaData('account', user_load(1));
       // if editing a reservation (series) we need to not include any of the reservations in current series
       if (arg(2) == 'edit') {
         $nid = arg(1);
         $res = node_load($nid);
-        if (isset($res->reservation_series_id[LANGUAGE_NONE][0]['value']) && $sid = $res->reservation_series_id[LANGUAGE_NONE][0]['value']) {
-          $query->fieldCondition('reservation_series_id', 'value', $sid, '!=');
+        if (isset($res->field_reservation_seriesid[LANGUAGE_NONE][0]['value']) && $sid = $res->field_reservation_seriesid[LANGUAGE_NONE][0]['value']) {
+          $query->fieldCondition('field_reservation_seriesid', 'value', $sid, '!=');
         }
       }     
       $result = $query->execute();
@@ -1297,10 +1295,10 @@ function _room_reservations_user_reservations() {
     $query->entityCondition('entity_type', 'node')
       ->entityCondition('bundle', 'room_reservations_reservation')   
       ->propertyCondition('uid', $user->uid)
-      ->fieldCondition('reservation_date', 'value', $earliest_date, '>=')     
-      ->fieldCondition('reservation_date', 'value', $latest_date, '<=')
-      ->fieldOrderBy('reservation_date', 'value', 'DESC')  
-      ->fieldOrderBy('reservation_time', 'value', 'DESC');
+      ->fieldCondition('field_reservation_date', 'value', $earliest_date, '>=')     
+      ->fieldCondition('field_reservation_date', 'value', $latest_date, '<=')
+      ->fieldOrderBy('field_reservation_date', 'value', 'DESC')  
+      ->fieldOrderBy('field_reservation_time', 'value', 'DESC');
     $result = $query->execute();
     if (isset($result['node'])) {
       $result_nids = array_keys($result['node']);
@@ -1308,11 +1306,11 @@ function _room_reservations_user_reservations() {
       foreach ($results as $data) {
         $reservation = array();
         $reservation['id'] = $data->nid;
-        $unix_timestamp = strtotime($data->reservation_date[LANGUAGE_NONE][0]['value']);
+        $unix_timestamp = strtotime($data->field_reservation_date[LANGUAGE_NONE][0]['value']);
         $reservation['date'] = date("l, n/j", $unix_timestamp);
         $reservation['time'] = '';
         foreach ($all_hours as $time_slot) {
-          if ($time_slot['time'] == $data->reservation_time[LANGUAGE_NONE][0]['value']) {
+          if ($time_slot['time'] == $data->field_reservation_time[LANGUAGE_NONE][0]['value']) {
             $reservation['time'] = $time_slot['display'];
             break;
           }

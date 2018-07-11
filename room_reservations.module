@@ -249,7 +249,6 @@ function room_reservations_form_user_admin_permissions_alter(&$form, &$form_stat
 function room_reservations_form_room_reservations_reservation_node_form_alter(&$form, &$form_state) {
   // params either passed in on url -  CREATE
   // or pulled from node - EDIT
-  
   if (user_access('administer site configuration') && isset($_GET['edit']) && $_GET['edit'] == 'standard') {
     return;
   }
@@ -257,10 +256,10 @@ function room_reservations_form_room_reservations_reservation_node_form_alter(&$
   // EDIT
   if ($nid = $form['nid']['#value']) {
     $res = $form['#node'];
-    $rid = $res->reservation_room[LANGUAGE_NONE][0]['target_id'];
-    $d = $res->reservation_date[LANGUAGE_NONE][0]['value'];  
+    $rid = $res->field_reservation_room[LANGUAGE_NONE][0]['target_id'];
+    $d = $res->field_reservation_date[LANGUAGE_NONE][0]['value'];  
     $yyyymmdd = date('Y-m-d', strtotime($d)); 
-    $t = $res->reservation_time[LANGUAGE_NONE][0]['value']; 
+    $t = $res->field_reservation_time[LANGUAGE_NONE][0]['value']; 
   }
   
   // CREATE NEW
@@ -296,40 +295,33 @@ function room_reservations_form_room_reservations_reservation_node_form_alter(&$
     <div><strong>' . t('Time') . ': ' . $time . '</strong></div>
     <br>';
   
-  // this used to be so much easier in D6.. ughh!!
-  $form['reservation_room']['#access'] = 0;
-  $form['reservation_date']['#access'] = 0;
-  $form['reservation_time']['#access'] = 0;      
-  $form['reservation_room'][LANGUAGE_NONE]['#default_value'] = $room->nid;
+  $form['field_reservation_room']['#access'] = 0;
+  $form['field_reservation_date']['#access'] = 0;
+  $form['field_reservation_time']['#access'] = 0;      
+  $form['field_reservation_room'][LANGUAGE_NONE]['#default_value'] = $room->nid;
   
   // Date fields are a major pita, setting default does nothing here; we need to carry this forward to the node_presave hook
   $form['#node']->date_default = $d;
-  $form['reservation_time'][LANGUAGE_NONE][0]['value']['#default_value'] = $t;
+  $form['field_reservation_time'][LANGUAGE_NONE][0]['value']['#default_value'] = $t;
   
   // remove Preview - can likely do this in node def
   unset($form['actions']['preview']);
   
   // hide Series ID field
-  $form['reservation_series_id']['#access'] = FALSE;
+  $form['field_reservation_seriesid']['#access'] = FALSE;
   
   // if we are editing; let's do some extra things:
   //  - disable Repeat options
   //  - (series) add msg that we are editing a series and link to edit just that entry
   if ($nid) {
-    $form['reservation_repeat_type']['#disabled'] = TRUE;
-    $form['reservation_repeat_until']['#disabled'] = TRUE;
-    // not sur ewhy this was here; if req i dont think structrue during edit is correct here
-    /*
-    if ($form['reservation_repeat_type'][LANGUAGE_NONE][0]['#value'] > 1) {
-      $form['reservation_repeat_until'][LANGUAGE_NONE][0]['#value'] = $form['reservation_repeat_until'][LANGUAGE_NONE][0]['#default_value']['value'];
-    }
-    */
-    
+    $form['field_reservation_repeat_type']['#disabled'] = TRUE;
+    $form['field_reservation_repeat_until']['#disabled'] = TRUE;
+
     // form alter is hit in/out of form so we alter only in so we dont show msgs after form is submitted - !count($form_state['input'])
-    if ($form['reservation_series_id'][LANGUAGE_NONE][0]['value']['#default_value'] && !count($form_state['input'])) {
+    if ($form['field_reservation_seriesid'][LANGUAGE_NONE][0]['value']['#default_value'] && !count($form_state['input'])) {
       if (isset($_GET['single'])) {
         $series_link = l(t('Click here'), "node/$nid/edit");
-        drupal_set_message(t('NOTE: you are editing a SINLGE day in a SERIES of reservations. Any changes made here will impact only the reservation  
+        drupal_set_message(t('NOTE: you are editing a SINGLE day in a SERIES of reservations. Any changes made here will impact only the reservation  
           for this day. !link if you want to edit the entire series.', array('!link' => $series_link)), 'warning');  
       }
       else {
@@ -340,7 +332,7 @@ function room_reservations_form_room_reservations_reservation_node_form_alter(&$
     }
     
     // and then parts that have to be here on both passes
-    if ($form['reservation_series_id'][LANGUAGE_NONE][0]['value']['#default_value']) {
+    if ($form['field_reservation_seriesid'][LANGUAGE_NONE][0]['value']['#default_value']) {
        if (isset($_GET['single'])) {
         // relabel Delete to Cancel Reservation 
         $form['actions']['delete']['#value'] = t('Cancel Reservation for This Day');
@@ -358,7 +350,7 @@ function room_reservations_form_room_reservations_reservation_node_form_alter(&$
     }
     
     // and if not part of a series; let's change DELETE button
-    if (!$form['reservation_series_id'][LANGUAGE_NONE][0]['value']['#default_value']) {
+    if (!$form['field_reservation_seriesid'][LANGUAGE_NONE][0]['value']['#default_value']) {
       $form['actions']['delete']['#value'] = t('Cancel Reservation');
     }
   }
@@ -374,14 +366,14 @@ function room_reservations_form_room_reservations_reservation_node_form_alter(&$
       $lengths[] = $length['length'];
     }
   }
-  foreach ($form['reservation_length'][LANGUAGE_NONE]['#options'] as $slot => &$option) {
+  foreach ($form['field_reservation_length'][LANGUAGE_NONE]['#options'] as $slot => &$option) {
     if (!in_array($slot, $lengths)) {
-      unset($form['reservation_length'][LANGUAGE_NONE]['#options'][$slot]);
+      unset($form['field_reservation_length'][LANGUAGE_NONE]['#options'][$slot]);
     }
   } 
   
-  $form['reservation_repeat_type'][LANGUAGE_NONE]['#default_value'] = $form['reservation_repeat_type'][LANGUAGE_NONE]['#default_value'] ? $form['reservation_repeat_type'][LANGUAGE_NONE]['#default_value'] : 1;
-  $form['reservation_repeat_until']['#states'] = array(
+  $form['field_reservation_repeat_type'][LANGUAGE_NONE]['#default_value'] = $form['field_reservation_repeat_type'][LANGUAGE_NONE]['#default_value'] ? $form['field_reservation_repeat_type'][LANGUAGE_NONE]['#default_value'] : 1;
+  $form['field_reservation_repeat_until']['#states'] = array(
     'visible' => array(
       ':input[name="reservation_repeat_type[und]"]' => array('!value' => '1'),
     ),
@@ -401,7 +393,7 @@ function room_reservations_node_presave($node) {
   switch ($node->type) {
     case 'room_reservations_reservation':
       if (isset($node->date_default)) {
-        $node->reservation_date[LANGUAGE_NONE][0]['value'] = $node->date_default;
+        $node->field_reservation_date[LANGUAGE_NONE][0]['value'] = $node->date_default;
       }
       break;
   }
@@ -410,7 +402,7 @@ function room_reservations_node_presave($node) {
 function room_reservations_date_popup_process_alter(&$element, &$form_state, &$context) {
   if (isset($element['#field']['field_name'])) {
     switch ($element['#field']['field_name']) {
-      case 'reservation_repeat_until': {
+      case 'field_reservation_repeat_until': {
         if (user_access('create room reservations extended')) {
           $advancedays = variable_get('room_reservations_advance_extended', 180);
         }
@@ -434,16 +426,16 @@ function return_to_reservations_page($form, &$form_state) {
     return;
   }
   
-  $rid = $form_state['values']['reservation_room'][LANGUAGE_NONE][0]['target_id'];
+  $rid = $form_state['values']['field_reservation_room'][LANGUAGE_NONE][0]['target_id'];
   $rooms = _room_reservations_rooms();
   $categories = _room_reservations_categories();
   $room = $rooms[$rid];
-  $catid = $room['reservations_room_category'][LANGUAGE_NONE][0]['target_id'];
+  $catid = $room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id'];
   $category = $categories[$catid];
   $anchor = strtolower(preg_replace('/[^a-zA-Z0-9-]+/', '-', $category['title']));
   
   // need to handle both update and delete case
-  $date = $form['#node']->reservation_date[LANGUAGE_NONE][0]['value'] ? $form['#node']->reservation_date[LANGUAGE_NONE][0]['value'] : $form_state['values']['reservation_date'][LANGUAGE_NONE][0]['value'];
+  $date = $form['#node']->field_reservation_date[LANGUAGE_NONE][0]['value'] ? $form['#node']->field_reservation_date[LANGUAGE_NONE][0]['value'] : $form_state['values']['field_reservation_date'][LANGUAGE_NONE][0]['value'];
   if ($date) {
     $return = date('n/d', strtotime($date));
     $form_state['redirect'] = array('room_reservations/' . $return, array('fragment' => $anchor));
@@ -467,14 +459,6 @@ function room_reservations_theme() {
         'user_reservations',
       ),
       'file' => '/view/room_reservations_calendar.view.inc',
-    ),
-    'room_reservations_descriptions' => array(
-      'variables' => array('categories, rooms'),
-      'file' => '/view/room_reservations.view.inc',
-    ),
-    'room_reservations_list' => array(
-      'variables' => array('user, base_url, user_reservations, count'),
-      'file' => '/view/room_reservations.view.inc',
     ),
   );
 }
@@ -536,4 +520,37 @@ function room_reservations_mail($key, &$message, $params) {
       $message['body'][] = '<html><body>' . $body . '</body></html>';
       break;
   }
+}
+
+/**
+ *  Implements hook_action_info()
+ *  Creates Views bulk operations to approve/unapprove reservations.
+ */
+function room_reservations_action_info() {
+  return array(
+    'room_reservations_bulk_approve' => array(
+      'type' => 'node',
+      'label' => t('Approve reservations'),
+      'behavior' => array('changes_property'),
+      'configurable' => FALSE,
+      'vbo_configurable' => FALSE,
+      'triggers' => array('any'),
+    ),
+    'room_reservations_bulk_unapprove' => array(
+      'type' => 'node',
+      'label' => t('Unapprove reservations'),
+      'behavior' => array('changes_property'),
+      'configurable' => FALSE,
+      'vbo_configurable' => FALSE,
+      'triggers' => array('any'),
+    ),
+  );
+}
+
+function room_reservations_bulk_approve(&$node, $context) {
+  $node->field_reservation_approved[LANGUAGE_NONE][0]['value'] = 1;
+}
+
+function room_reservations_bulk_unapprove(&$node, $context) {
+  $node->field_reservation_approved[LANGUAGE_NONE][0]['value'] = 0;
 }

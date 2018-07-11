@@ -4,8 +4,6 @@
  * Calendar view functionality.
  */
 
-module_load_include('inc', 'room_reservations', '/view/room_reservations.view');
-
 /**
  * Theme the room reservation calendar page.
  *
@@ -184,7 +182,7 @@ function theme_room_reservations($variables) {
     $rooms_per_category = 0;
     foreach ($rooms as $room) {
       $rid = $room['nid'];
-      if (!empty($room['reservations_room_category'][LANGUAGE_NONE][0]['target_id']) && $room['reservations_room_category'][LANGUAGE_NONE][0]['target_id'] == $category['nid']) {
+      if (!empty($room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id']) && $room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id'] == $category['nid']) {
         $rooms_per_category++;
       }
     }
@@ -194,24 +192,13 @@ function theme_room_reservations($variables) {
       $rid = $room['nid'];
       $room_name = $room['title'];
       $room_link = l($room_name, 'node/' . $rid);
-      $room_desc = $room['body'][LANGUAGE_NONE][0]['safe_value'];
-      
-      // use qtip if we have it
-      if (module_exists('qtip')) {
-        $room_info = '<span class="qtip-link"><span class="qtip-tooltip">' . $room_desc .  '</span>' . $room_link . '</span>';
-      }
-      else {
-        $room_info = $room_link;
-      }
-      
-      if ($room['reservations_room_category'][LANGUAGE_NONE][0]['target_id'] == $category['nid']) {
+
+      if ($room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id'] == $category['nid']) {
         $c++; $r = 0;
         // Room name, capacity.
-        //$output .= '<div class="grid-column room-column"><ul>';
-        //$output .= '<li class="room-info">' . $room_info . '</li>';
-        $table[$r][$c] = '<li class="room-info">' . $room_info . '</li>';
+        $table[$r][$c] = '<li class="room-info">' . $room_link . '</li>';
         $r++;
-        $table[$r][$c] = "<li class='room-info room-info-heading'>" . $room['reservations_room_capacity'][LANGUAGE_NONE][0]['value'] . '</li>';
+        $table[$r][$c] = "<li class='room-info room-info-heading'>" . $room['field_reservations_room_capacity'][LANGUAGE_NONE][0]['value'] . '</li>';
         // Populate each time slot.
         foreach ($hours as $time_slot) {
           $r++;
@@ -312,9 +299,9 @@ function theme_room_reservations($variables) {
         }
         // Room name and capacity.
         $r++;
-        $table[$r][$c] = '<li class="room-info">' . $room_info . '</li>';
+        $table[$r][$c] = '<li class="room-info">' . $room_link . '</li>';
         $r++;
-        $table[$r][$c] = '<li class="room-info">' . $room['reservations_room_capacity'][LANGUAGE_NONE][0]['value'] . '</li>';
+        $table[$r][$c] = '<li class="room-info">' . $room['field_reservations_room_capacity'][LANGUAGE_NONE][0]['value'] . '</li>';
       }
     }
     

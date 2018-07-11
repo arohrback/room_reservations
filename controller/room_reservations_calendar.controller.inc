@@ -49,9 +49,6 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
     $dates[0]['today'] = TRUE;
   }
   
-  // a bit hacky; but we need to store what the calendar is using for its date so we can use this in theme functions later
-  //$_SESSION['reservations_current_day'] = $yyyymmdd;
-  
   // If the day being displayed is today, only display time slots that are later than the current time minus two hours.
   $today_displayed = FALSE;
   foreach ($dates as $day) {
@@ -142,6 +139,7 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
         'end' => FALSE,
         'user' => '',
         'name' => '',
+        'approved' => FALSE,
       );
     }
   }
@@ -149,8 +147,8 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'room_reservations_reservation')
-    ->fieldCondition('reservation_date', 'value', $yyyymmdd . '%', 'like')
-    ->fieldOrderBy('reservation_time', 'value', 'DESC')
+    ->fieldCondition('field_reservation_date', 'value', $yyyymmdd . '%', 'like')
+    ->fieldOrderBy('field_reservation_time', 'value', 'DESC')
     // EFQ respects access so if user does not have access to view a reservation (most likely due to some access module then we will not return a 
     // reservation for this slot; this means it will not block this slot from being bookable - which is likely worse than being able to 
     // see the booking title (especially since we have a method to block the title if user really doesn't want anyone to see it)
@@ -162,9 +160,10 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
     $results = entity_load('node', $result_nids);
     foreach ($results as $data) {
       $id = $data->nid;
-      $time = $data->reservation_time[LANGUAGE_NONE][0]['value'];;
-      $rid = $data->reservation_room[LANGUAGE_NONE][0]['target_id'];
+      $time = $data->field_reservation_time[LANGUAGE_NONE][0]['value'];
+      $rid = $data->field_reservation_room[LANGUAGE_NONE][0]['target_id'];
       $name = $data->title;
+      $approved = isset($data->field_reservation_approved[LANGUAGE_NONE][0]) ? $data->field_reservation_approved[LANGUAGE_NONE][0]['value'] : NULL;
       $user_name = $data->name;
       $reservations[$rid][$time]['booked'] = TRUE;
       if (empty($reservations[$rid][$time]['class'])) {
@@ -173,16 +172,18 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
       $reservations[$rid][$time]['class'] .= ' booked';
       $reservations[$rid][$time]['name'] = $name;
       $reservations[$rid][$time]['user_name'] = $user_name;
+      if (isset($data->field_reservation_approved[LANGUAGE_NONE][0]))
+        $reservations[$rid][$time]['class'] .= ($approved ? ' approved' : ' pending');
       $reservations[$rid][$time]['id'] = $id; 
-      $reservations[$rid][$time]['series_id'] = isset($data->reservation_series_id[LANGUAGE_NONE][0]['value']) ? $data->reservation_series_id[LANGUAGE_NONE][0]['value'] : '';
+      $reservations[$rid][$time]['series_id'] = isset($data->field_reservation_seriesid[LANGUAGE_NONE][0]['value']) ? $data->field_reservation_seriesid[LANGUAGE_NONE][0]['value'] : '';
       $reservations[$rid][$time]['user'] = $data->uid;
-      $reservations[$rid][$time]['blocked'] = isset($data->reservation_block_title[LANGUAGE_NONE][0]['value']) ? $data->reservation_block_title[LANGUAGE_NONE][0]['value'] : 0;
+      $reservations[$rid][$time]['blocked'] = isset($data->field_reservation_private[LANGUAGE_NONE][0]['value']) ? $data->field_reservation_private[LANGUAGE_NONE][0]['value'] : 0;
       if (empty($reservations[$rid][$time]['time'])) {
         $reservations[$rid][$time]['time'] = $time;
       }
 
       // add rest of slots as booked for the length of this reservation
-      $length = $data->reservation_length[LANGUAGE_NONE][0]['value'];;
+      $length = $data->field_reservation_length[LANGUAGE_NONE][0]['value'];;
       $time_slots = $length / 30;
       $reservations[$rid][$time]['slots'] = $time_slots;
       $remainder = $length % 30;
@@ -199,6 +200,8 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
           $reservations[$rid][$next_time]['class'] = '';
         }
         $reservations[$rid][$next_time]['class'] .= ' booked';
+        if (isset($data->field_reservation_approved[LANGUAGE_NONE][0]))
+          $reservations[$rid][$next_time]['class'] .= ($approved ? ' approved' : ' pending');
         $x++;
         // unclear how we handle wrapping a reservation to the next day; but reservation time slots can't go passed midnight; i.e. slot 47 
         if ($key == 47) {
@@ -209,7 +212,7 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
       // add in pre/post buffer for setup/takedown (rev 7.x-1.3+)
       //  - if the slot is part of buffer we add "setup" to class
       //  - if we don't have admin rights; we also mark it as booked so no one can book in these slots
-      $category = $categories[$rooms[$rid]['reservations_room_category'][LANGUAGE_NONE][0]['target_id']];
+      $category = $categories[$rooms[$rid]['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id']];
       $preslots = $category['prebuffer'] / 30;
       $postslots = $category['postbuffer'] / 30;
       $startkey = array_search($reservations[$rid][$time]['time'], $times);
@@ -266,9 +269,9 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'room_reservations_reservation')
-    ->fieldCondition('reservation_date', 'value', $previous_day . '%', 'like')
-    ->fieldCondition('reservation_time', 'value', $search_times,  'in')
-    ->fieldOrderBy('reservation_time', 'value', 'DESC')
+    ->fieldCondition('field_reservation_date', 'value', $previous_day . '%', 'like')
+    ->fieldCondition('field_reservation_time', 'value', $search_times,  'in')
+    ->fieldOrderBy('field_reservation_time', 'value', 'DESC')
     // EFQ respects access so let's load the reservations as user 1 to make sure we get them all
     ->addMetaData('account', user_load(1));
   $result = $query->execute();
@@ -277,9 +280,9 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
     $results = entity_load('node', $result_nids);
     foreach ($results as $data) {
       $id = $data->nid;
-      $time = $data->reservation_time[LANGUAGE_NONE][0]['value'];
-      $rid = $data->reservation_room[LANGUAGE_NONE][0]['target_id'];
-      $length = $data->reservation_length[LANGUAGE_NONE][0]['value'];
+      $time = $data->field_reservation_time[LANGUAGE_NONE][0]['value'];
+      $rid = $data->field_reservation_room[LANGUAGE_NONE][0]['target_id'];
+      $length = $data->field_reservation_length[LANGUAGE_NONE][0]['value'];
       //$room_name = $data->room;
       $name = $data->title;
       $user_name = $data->name;
