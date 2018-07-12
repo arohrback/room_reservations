@@ -23,7 +23,7 @@ function room_reservations_views_api($module, $api) {
 function room_reservations_form($node, &$form_state) {
   return node_content_form($node, node_type_get_type($node));
 }
-    
+
 /**
  * Implements hook_node_info().
  * Establish our custom content types.
@@ -228,7 +228,6 @@ function room_reservations_node_access($nodetype_or_node, $op, $account) {
     $nodetype = $nodetype_or_node;
   }
   switch ($nodetype) {
-    case 'room_reservations_category': 
     case 'room_reservations_room':
       switch ($op) {
         case 'create':
@@ -247,6 +246,9 @@ function room_reservations_node_access($nodetype_or_node, $op, $account) {
       else {
         switch ($op) {
           case 'create':
+            if (count(arg()) < 4) {
+              return NODE_ACCESS_IGNORE;
+            }
             // if we are trying to create a reservation let's make sure user hasn't just entered dates via url
             // since available lengths takes allowed dates into account; lets just use that
             $yyyymmdd = _room_reservations_yyyymmdd((int) arg(3), (int) arg(4));
@@ -279,21 +281,6 @@ function room_reservations_node_access($nodetype_or_node, $op, $account) {
 * @param mixed $form_state
 * @param mixed $form_id
 */
-function room_reservations_form_user_admin_permissions_alter(&$form, &$form_state, $form_id) {
-  foreach ($form['permission'] as $perm => $value) {
-    if (stristr($perm, 'content') && stristr($perm, 'room_reservations_')) {
-      unset($form['permission'][$perm]);
-    } 
-  } 
-  
-  foreach ($form['checkboxes'] as $box => $settings) {
-    foreach ($settings['#options'] as $index => $option) {
-      if (stristr($index, 'content') && stristr($index, 'room_reservations_')) {
-        unset($form['checkboxes'][$box]['#options'][$index]);
-      }
-    }
-  }
-}
 
 function room_reservations_form_room_reservations_reservation_node_form_alter(&$form, &$form_state) {
   // params either passed in on url -  CREATE
@@ -491,8 +478,8 @@ function return_to_reservations_page($form, &$form_state) {
   $rid = $form_state['values']['field_reservation_room'][LANGUAGE_NONE][0]['target_id'];
   $rooms = _room_reservations_rooms();
   $room = $rooms[$rid];
-  // TODO: Load category taxonomy term and use its properties.
-  $category = array('title' => 'Category Placeholder');
+  $categories = taxonomy_get_tree($category_vocab->vid);
+  $category = array_shift($categories);
   $anchor = strtolower(preg_replace('/[^a-zA-Z0-9-]+/', '-', $category['title']));
   
   // need to handle both update and delete case

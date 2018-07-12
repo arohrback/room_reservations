@@ -202,6 +202,12 @@
 #rooms-calendar .calendar-header .field-name-field-reservations-equipment .field-item {
   display: block;
 }
+
+#rooms-calendar .calendar-header .field-type-taxonomy-term-reference .field-item a {
+  padding: initial;
+  border: none;
+  margin: 0;
+}
 .page-room-reservations .form-item label {
   display: inline;
 }

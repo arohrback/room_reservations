@@ -1098,7 +1098,12 @@ function _room_reservations_is_slot_free($rid, $yyyymmdd, $time, $length) {
   return false;
 }
 
-function _room_reservations_yyyymmdd($month, $day) {
+function _room_reservations_yyyymmdd($month = 0, $day = 0) {
+  if ($month == 0 || $day == 0) {
+    $month = date('n');
+    $day = date('j');
+  }
+  
   // determine if this year or next year
   $yearnow = date('Y');
   $absdaynow = date('z');
