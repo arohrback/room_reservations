@@ -154,19 +154,6 @@ function room_reservations_admin_settings($form, &$form_state) {
     '#options' => $options,
   );
     
-  
-  /*
-  $form['room_reservations_group_size'] = array(
-    '#title' => t('Include group size.'),
-    '#type' => 'checkbox',
-    '#return_value' => 1,
-    '#default_value' => variable_get('room_reservations_group_size', 0),
-    '#description' => t('Show the group size field on the reservation form
-      and require users to enter this information.'),
-    '#weight' => -40,
-  );
-  */
-  
   return system_settings_form($form);
 }
 
@@ -192,218 +179,6 @@ function room_reservations_admin_settings_validate($form_id, &$form_state) {
   }
 }
 
-/**
- * Form constructor for the Settings / Default Email Address config page.
- */
-function room_reservations_admin_settings_default_email($form, &$form_state) {
-  $options = array(
-    '0' => t('Do not set a default email address.'),
-    '1' => t('Set the default email address equal to the user ID.'),
-    '2' => t('Set the default email address equal to the user ID plus the domain name entered below.'),
-  );
-  $default_option = _room_reservations_get_variable('default_email_address');
-  $default_domain = _room_reservations_get_variable('default_email_domain');
-  $form['options'] = array(
-    '#title' => t('Options'),
-    '#type' => 'radios',
-    '#options' => $options,
-    '#description' => t('Options for including a default email address
-      in the Reminders - Email Addresses field on the reservation form.'),
-    '#default_value' => $default_option,
-    '#weight' => -100,
-  );
-  $form['domain'] = array(
-    '#title' => t('Domain Name'),
-    '#type' => 'textfield',
-    '#description' => t('The domain name that is added to the user
-      name to create the default email address on the reservation form.
-      Required if the third option above is selected.'),
-    '#default_value' => $default_domain,
-    '#maxlength' => 80,
-    '#size' => 80,
-    '#weight' => -90,
-  );
-  $form['save'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-    '#weight' => 100,
-  );
-  $form['reset'] = array(
-    '#type' => 'submit',
-    '#value' => t('Reset to defaults'),
-    '#weight' => 101,
-  );
-
-  return $form;
-}
-
-/**
- * Form validation for the Settings / Default Email Address config page.
- */
-function room_reservations_admin_settings_default_email_validate(
-  $form_id, &$form_state) {
-  if ($form_state['clicked_button']['#value'] == t('Save configuration')) {
-    $option = $form_state['values']['options'];
-    $domain = trim($form_state['values']['domain']);
-    if (($option == 2) && (!$domain)) {
-      $field = 'domain';
-      $message = t('A domain name must be entered when this option is selected.');
-      form_set_error($field, $message);
-    }
-  }
-}
-
-/**
- * Form submission for the Settings / Default Email Address config page.
- */
-function room_reservations_admin_settings_default_email_submit($form_id, &$form_state) {
-  if ($form_state['clicked_button']['#value'] == t('Save configuration')) {
-    $option = $form_state['values']['options'];
-    $domain = trim($form_state['values']['domain']);
-    $confirmation = ROOM_RESERVATIONS_SAVE_CONFIRMATION_MSG;
-    $error = ROOM_RESERVATIONS_SAVE_ERROR_MSG;
-  }
-  elseif ($form_state['clicked_button']['#value'] == t('Reset to defaults')) {
-    $option = 0;
-    $domain = '';
-    $confirmation = ROOM_RESERVATIONS_RESET_CONFIRMATION_MSG;
-    $error = ROOM_RESERVATIONS_RESET_ERROR_MSG;
-  }
-  $errors = FALSE;
-  $result = _room_reservations_set_variable('default_email_address', $option);
-  if (!$result) {
-    $errors = TRUE;
-  }
-  $result = _room_reservations_set_variable('default_email_domain', $domain);
-  if (!$result) {
-    $errors = TRUE;
-  }
-  if ($errors) {
-    drupal_set_message($error, 'error');
-  }
-  else {
-    drupal_set_message($confirmation);
-  }
-}
-
-/**
- * Form constructor for the Settings / Reminders configuration page.
- */
-function room_reservations_admin_settings_reminders($form, &$form_state) {
-  $default_send_reminders = _room_reservations_get_variable('send_reminders');
-  $default_reminder_time = _room_reservations_get_variable('reminder_time');
-  $default_reminder_cutoff = _room_reservations_get_variable('reminder_cutoff');
-  $options = array();
-  $options['1300'] = t('1:00 PM');
-  $options['1400'] = t('2:00 PM');
-  $options['1500'] = t('3:00 PM');
-  $options['1600'] = t('4:00 PM');
-  $options['1700'] = t('5:00 PM');
-  $options['1800'] = t('6:00 PM');
-  $options['1900'] = t('7:00 PM');
-  $options['2000'] = t('8:00 PM');
-  $options['2100'] = t('9:00 PM');
-  $options['2200'] = t('10:00 PM');
-  $options['2300'] = t('11:00 PM');
-  $form['send_reminders'] = array(
-    '#title' => t('Send reminders.'),
-    '#type' => 'checkbox',
-    '#return_value' => 1,
-    '#default_value' => $default_send_reminders,
-    '#description' => t('Send reservation reminders.'),
-    '#weight' => -100,
-  );
-  $form['reminder_time'] = array(
-    '#title' => t('Send reminders daily at'),
-    '#type' => 'select',
-    '#description' => t('The time each day when reminders will be sent
-      for the next day\'s reservations.  Note that a cron job must be
-      set up to run at this time.'),
-    '#options' => $options,
-    '#default_value' => $default_reminder_time,
-    '#multiple' => FALSE,
-    '#weight' => -90,
-  );
-  $form['reminder_cutoff'] = array(
-    '#title' => t('Send reminders for reservations created before'),
-    '#type' => 'select',
-    '#description' => t('For reservations created on the same day
-      that the reminder is sent, only send a reminder if the
-      reservation was created before this time.  This is set so that
-      patrons are not sent a reminder immediately after creating
-      a reservation.'),
-    '#options' => $options,
-    '#default_value' => $default_reminder_cutoff,
-    '#multiple' => FALSE,
-    '#weight' => -80,
-  );
-  $form['save'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-    '#weight' => 100,
-  );
-  $form['reset'] = array(
-    '#type' => 'submit',
-    '#value' => t('Reset to defaults'),
-    '#weight' => 101,
-  );
-  return $form;
-}
-
-/**
- * Form submission for the Settings / Reminders configuration page.
- */
-function room_reservations_admin_settings_reminders_submit($form_id, &$form_state) {
-  if ($form_state['clicked_button']['#value'] == t('Save configuration')) {
-    $send_reminders = $form_state['values']['send_reminders'];
-    $reminder_time = $form_state['values']['reminder_time'];
-    $reminder_cutoff = $form_state['values']['reminder_cutoff'];
-    $confirmation = ROOM_RESERVATIONS_SAVE_CONFIRMATION_MSG;
-    $error = ROOM_RESERVATIONS_SAVE_ERROR_MSG;
-  }
-  elseif ($form_state['clicked_button']['#value'] == t('Reset to defaults')) {
-    $send_reminders = 0;
-    $reminder_time = 1300;
-    $reminder_cutoff = 1300;
-    $confirmation = ROOM_RESERVATIONS_RESET_CONFIRMATION_MSG;
-    $error = ROOM_RESERVATIONS_RESET_ERROR_MSG;
-  }
-  $errors = FALSE;
-  $result = _room_reservations_set_variable('send_reminders', $send_reminders);
-  if (!$result) {
-    $errors = TRUE;
-  }
-  $result = _room_reservations_set_variable('reminder_time', $reminder_time);
-  if (!$result) {
-    $errors = TRUE;
-  }
-  $result = _room_reservations_set_variable('reminder_cutoff', 
-    $reminder_cutoff);
-  if (!$result) {
-    $errors = TRUE;
-  }
-  if ($errors) {
-    drupal_set_message($error, 'error');
-  }
-  else {
-    drupal_set_message($confirmation);
-  }
-}
-
-/**
- * Form validation for the Settings / Reminders configuration page.
- */
-function room_reservations_admin_settings_reminders_validate($form_id, &$form_state) {
-  if ($form_state['clicked_button']['#value'] == t('Save configuration')) {
-    $reminder_time = $form_state['values']['reminder_time'];
-    $reminder_cutoff = $form_state['values']['reminder_cutoff'];
-    if ($reminder_time < $reminder_cutoff) {
-      $field = 'reminder_time';
-      $message = t("'Send reminder daily at' time cannot be earlier than 'Send reminders for reservations created before' time.");
-      form_set_error($field, $message);
-    }
-  }
-}
 
 /**
  * Form constructor for the Hours / Default Hours configuration page.
@@ -964,106 +739,44 @@ function room_reservations_admin_settings_daily_hours_submit($form_id, &$form_st
 /**
  * Form constructor for the Display Text configuration page.
  */
-function room_reservations_admin_settings_page($form, &$form_state) {
-  $default_calendar_text = _room_reservations_get_variable('calendar_text');
-  $default_reserve_room_instructions_text
-    = _room_reservations_get_variable('reserve_instructions');
-  $default_reserve_form_instructions_text
-    = _room_reservations_get_variable('reserve_form_instructions');
-  $default_policies = _room_reservations_get_variable('policies');
-  $form['calendar_text'] = array(
+function room_reservations_admin_display_text_page($form, &$form_state) {
+  $form['room_reservations_calendar_text'] = array(
     '#title' => t('Calendar page text'),
     '#type' => 'textarea',
     '#rows' => 5,
     '#description' => t('Text displayed at the top of the reservation
        calendar page.'),
-    '#default_value' => $default_calendar_text,
-    '#weight' => -90,
+    '#default_value' => variable_get('room_reservations_calendar_text', ''),
   );
-  $form['reserve_instructions_text'] = array(
+  $form['room_reservations_reserve_instructions_text'] = array(
     '#title' => t('Reserve a room instructions text'),
     '#type' => 'textarea',
     '#rows' => 2,
     '#description' => t('Text displayed just above the words Reservation
       Calendar on the reservation calendar page.'),
-    '#default_value' => $default_reserve_room_instructions_text,
-    '#weight' => -80,
+    '#default_value' => variable_get('room_reservations_reserve_instructions_text', ''),
   );
-  $form['form_instructions_text'] = array(
+  $form['room_reservations_form_instructions_text'] = array(
     '#title' => t('Reservation form instructions text'),
     '#type' => 'textarea',
     '#rows' => 2,
     '#description' => t('Text displayed at the top of the reservation form.'),
-    '#default_value' => $default_reserve_form_instructions_text,
-    '#weight' => -70,
+    '#default_value' => variable_get('room_reservations_form_instructions_text', ''),
   );
-  $form['policies'] = array(
+  $form['room_reservations_policies'] = array(
     '#title' => t('Policies'),
     '#type' => 'textarea',
     '#rows' => 10,
     '#description' => t('Policies displayed on the reservation policies page.'),
-    '#default_value' => $default_policies,
-    '#weight' => -60,
+    '#default_value' => variable_get('room_reservations_policies', ''),
   );
-  $form['save'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-    '#weight' => 100,
+  $form['room_reservations_food_conflict'] = array(
+    '#title' => t('Food conflict message'),
+    '#type' => 'textarea',
+    '#rows' => 2,
+    '#description' => t('Message displayed when a meeting that serves food tries to schedule a room that forbids it.'),
+    '#default_value' => variable_get('room_reservations_food_conflict', 'Food is not allowed in this room.'),
   );
-  $form['reset'] = array(
-    '#type' => 'submit',
-    '#value' => t('Reset to defaults'),
-    '#weight' => 101,
-  );
-  return $form;
-}
 
-/**
- * Form submission for the Display Text configuration page.
- */
-function room_reservations_admin_settings_page_submit($form_id, &$form_state) {
-  if ($form_state['clicked_button']['#value'] == t('Save configuration')) {
-    $calendar_text = $form_state['values']['calendar_text'];
-    $reserve_room_instructions_text
-      = $form_state['values']['reserve_instructions_text'];
-    $reserve_form_instructions_text
-      = $form_state['values']['form_instructions_text'];
-    $policies = $form_state['values']['policies'];
-    $confirmation = ROOM_RESERVATIONS_SAVE_CONFIRMATION_MSG;
-    $error = ROOM_RESERVATIONS_SAVE_ERROR_MSG;
-  }
-  elseif ($form_state['clicked_button']['#value'] == t('Reset to defaults')) {
-    $calendar_text = '';
-    $reserve_room_instructions_text = '';
-    $reserve_form_instructions_text = '';
-    $policies = '';
-    $confirmation = ROOM_RESERVATIONS_RESET_CONFIRMATION_MSG;
-    $error = ROOM_RESERVATIONS_RESET_ERROR_MSG;
-  }
-  $errors = FALSE;
-  $result = _room_reservations_set_variable('calendar_text', $calendar_text);
-  if (!$result) {
-    $errors = TRUE;
-  }
-  $result = _room_reservations_set_variable('reserve_instructions', 
-      $reserve_room_instructions_text);
-  if (!$result) {
-    $errors = TRUE;
-  }
-  $result = _room_reservations_set_variable('reserve_form_instructions', 
-      $reserve_form_instructions_text);
-  if (!$result) {
-    $errors = TRUE;
-  }
-  $result = _room_reservations_set_variable('policies', $policies);
-  if (!$result) {
-    $errors = TRUE;
-  }
-  if ($errors) {
-    drupal_set_message($error, 'error');
-  }
-  else {
-    drupal_set_message($confirmation);
-  }
+  return system_settings_form($form);
 }
-

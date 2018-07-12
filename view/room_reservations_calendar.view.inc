@@ -164,8 +164,6 @@ function theme_room_reservations($variables) {
     
     $table[$r][$c] = "<li class='room-info'>" . t('Room') . '</li>';
     $r++;
-    $table[$r][$c] = "<li class='room-info room-info-heading'>" . t('Capacity') . '</li>';
-    $r++;
    
     // Available hours column.
     foreach ($hours as $time_slot) {
@@ -173,10 +171,6 @@ function theme_room_reservations($variables) {
       $table[$r][$c] = "<li class='" . $time_slot['class'] . " timeslot' time='" . $time_slot['time'] . "' " . '>' . $time_display . '</li>';
       $r++;
     }
-    $table[$r][$c] = "<li class='room-info room-info-footer'>" . t('Room') . '</li>';
-    $r++;
-    $table[$r][$c] = "<li class='room-info'>" . t('Capacity') . '</li>';
-    $r++;
     // Count the number of rooms in the selected category.
     $rooms_per_category = 0;
     foreach ($rooms as $room) {
@@ -191,13 +185,13 @@ function theme_room_reservations($variables) {
       $rid = $room['nid'];
       $room_name = $room['title'];
       $room_link = l($room_name, 'node/' . $rid);
+      $room_view = node_view((object) $room, 'reservation_calendar');
+      $room_header = drupal_render($room_view);
 
       if ($room['field_reservations_room_category'][LANGUAGE_NONE][0]['tid'] == $category->tid) {
         $c++; $r = 0;
         // Room name, capacity.
-        $table[$r][$c] = '<li class="room-info">' . $room_link . '</li>';
-        $r++;
-        $table[$r][$c] = "<li class='room-info room-info-heading'>" . $room['field_reservations_room_capacity'][LANGUAGE_NONE][0]['value'] . '</li>';
+        $table[$r][$c] = '<li class="room-info">' . $room_header . '</li>';
         // Populate each time slot.
         foreach ($hours as $time_slot) {
           $r++;
@@ -295,10 +289,6 @@ function theme_room_reservations($variables) {
           $table[$r][$c] = "<li class='" . $slotclass . ' ' . $booked_class . ' ' . $custom_class . ' ' . $viewable_class .  ' ' . $widthclass. "'>" . $link . "</li>";
         }
         // Room name and capacity.
-        $r++;
-        $table[$r][$c] = '<li class="room-info">' . $room_link . '</li>';
-        $r++;
-        $table[$r][$c] = '<li class="room-info">' . $room['field_reservations_room_capacity'][LANGUAGE_NONE][0]['value'] . '</li>';
       }
     }
     
@@ -318,16 +308,15 @@ function theme_room_reservations($variables) {
       $m = $c;
       $n = $r;
     }
-    for ($x = 0; $x <= $m; $x++){
-      if ($flipped && $compressed && ($x == 1 || $x == $m || $x == $m - 1)) continue;
-      $output .= "<div class='grid-column hours-column'><ul>";
-      for ($y = 0; $y <= $n; $y++) {
-        if (!$flipped && $compressed && ($y == 1 || $y == $n || $y == $n - 1)) continue;
-        $output .= $table[$y][$x];
+    $output .= "<table class='reservation-grid'>";
+    for ($y = 0; $y <= $n; $y++) {
+      $output .= "<tr>";
+      for ($x = 0; $x <= $m; $x++) {
+        $output .= "<td class='reservation-slot'>{$table[$y][$x]}</td>";
       }
-      $output .= '</ul></div>';
-    }  
-    
+      $output .= "</tr>";
+    }
+    $output .= "</table>";
     // end of main DIV wrapper for "table"
     $output .= '</div></div>';
   }

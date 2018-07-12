@@ -85,22 +85,36 @@
   text-align: center;
 }
 
-#rooms-calendar .panel .gcolumns .grid-column {
+#rooms-calendar .panel .gcolumns .grid-column, #rooms-calendar table.reservation-grid {
   float: left;
+  border: none;
+  width: auto;
 }
 
-#rooms-calendar div.grid-column {
+#rooms-calendar table.reservation-grid tr {
+  border: none;
+}
+#rooms-calendar table.reservation-grid td {
+  border: none;
+}
+#rooms-calendar table.reservation-grid td.reservation-slot {
   max-width: 115px;
+  padding: 0;
+  border: 1px solid #dddddd;
 }
-
+#rooms-calendar table.reservation-grid td.reservation-slot:first-of-type {
+  min-width: 100px;
+}
+#rooms-calendar table.reservation-grid tr:first-of-type td.reservation-slot {
+  border: none;
+}
 #rooms-calendar .panel .gcolumns ul {
   padding: 0 1px;
 }
 
 #rooms-calendar .panel .gcolumns li {
-  border: 1px solid #dddddd;
   font-size: 85%;
-  height: 1.33em;
+  min-height: 1.33em;
   line-height: 15px;
   list-style-type: none;
   margin: -1px auto 0;
@@ -114,6 +128,7 @@
 */
 #rooms-calendar .panel .gcolumns li.room-info {
   border: none;
+  height: auto;
 }
 
 #rooms-calendar .panel .gcolumns li.room-info-heading {
@@ -172,6 +187,21 @@
   display: none;
 }
 
+#rooms-calendar .calendar-header h3 {
+  padding: 0;
+  margin: 0 0 0.25em;
+  font-size: 1rem;
+}
+#rooms-calendar .calendar-header .field {
+  margin-bottom: 3px;
+}
+#rooms-calendar .calendar-header .field-label {
+  padding: 0;
+  margin: 0;
+}
+#rooms-calendar .calendar-header .field-name-field-reservations-equipment .field-item {
+  display: block;
+}
 .page-room-reservations .form-item label {
   display: inline;
 }

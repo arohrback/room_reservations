@@ -829,7 +829,7 @@ function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $a
   // need to limit these valid lengths by a prebuffer if it exists for the room
   // but only if not permissions to do this
   if (!user_access('book over buffer')) {
-    $preslots = $rooms[$rid]['field_reservations_prebuffer'] / 30;
+    $preslots = $rooms[$rid]['field_reservations_prebuffer'][LANGUAGE_NONE][0]['value'] / 30;
     if ($preslots) {
       foreach ($valid_lengths as $index => $length) {
         if ($length['is_valid'] == false) {

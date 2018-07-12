@@ -54,6 +54,22 @@ function room_reservations_node_info() {
 }
 
 /**
+ * Implements hook_entity_info_alter().
+ * Adds reservation calendar view mode to room content type
+ */
+function room_reservations_entity_info_alter(&$entity_info) {
+
+  $entity_info['node']['view modes'] += array(
+    'reservation_calendar' => array(
+      'label' => t('Reservation calendar header'),
+      'custom settings' => FALSE,
+    ),
+  );
+
+  return $entity_info;
+}
+
+/**
  * Implements hook_menu().
  */
 function room_reservations_menu() {
@@ -107,7 +123,7 @@ function room_reservations_menu() {
   $items['admin/config/system/room_reservations/page'] = array(
     'title' => 'Display Text',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('room_reservations_admin_settings_page'),
+    'page arguments' => array('room_reservations_admin_display_text_page'),
     'access arguments' => array('administer room reservations system'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'room_reservations.admin.inc',
@@ -387,7 +403,8 @@ function room_reservations_form_room_reservations_reservation_node_form_alter(&$
       $form['actions']['delete']['#value'] = t('Cancel Reservation');
     }
   }
-    
+  // Validate meeting conditions with room policies.
+  $form['#validate'][] = 'room_reservations_validate_reservation';
   // always redirect back to reservations calendar page
   $form['actions']['submit']['#submit'][] = 'return_to_reservations_page';
   
@@ -413,6 +430,18 @@ function room_reservations_form_room_reservations_reservation_node_form_alter(&$
   );
   
   return;  
+}
+
+function room_reservations_validate_reservation($form, &$form_state) {
+  // Load the meeting's room as an EMW.
+  $room = entity_metadata_wrapper('node', $form_state['values']['field_reservation_room'][LANGUAGE_NONE][0]['target_id']);
+  $values = $form_state['values'];
+  // Check meeting details against room policies.
+  // If the meeting will have food and the room doesn't allow it, say so.
+  if ($values['field_reservation_food'][LANGUAGE_NONE][0]['value'] && $room->field_reservations_room_food_ok->value() == FALSE) {
+    form_set_error('field_reservation_food', variable_get('room_reservations_food_conflict', t('This room does not allow food.')));
+  }
+  // TODO: Check equipment needs against room availability.
 }
 
 function room_reservations_form_node_delete_confirm_alter(&$form, &$form_state, $form_id) {
@@ -585,4 +614,22 @@ function room_reservations_bulk_approve(&$node, $context) {
 
 function room_reservations_bulk_unapprove(&$node, $context) {
   $node->field_reservation_approved[LANGUAGE_NONE][0]['value'] = 0;
+}
+
+function room_reservations_theme_registry_alter(&$theme_registry) {
+  // Defined path to the current module.
+  $module_path = drupal_get_path('module', 'room_reservations');
+  // Find all .tpl.php files in this module's folder recursively.
+  $template_file_objects = drupal_find_theme_templates($theme_registry, '.tpl.php', $module_path . '/templates');
+  // Iterate through all found template file objects.
+  foreach ($template_file_objects as $key => $template_file_object) {
+    // If the template has not already been overridden by a theme.
+    if (!isset($theme_registry[$key]['theme path']) || !preg_match('#/themes/#', $theme_registry[$key]['theme path'])) {
+      // Alter the theme path and template elements.
+      $theme_registry[$key]['theme path'] = $module_path;
+      $theme_registry[$key] = array_merge($theme_registry[$key], $template_file_object);
+      $theme_registry[$key]['type'] = 'module';
+    }
+  }
+  
 }
