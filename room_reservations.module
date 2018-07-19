@@ -150,6 +150,14 @@ function room_reservations_menu() {
     'weight' => 30,
     'file' => '/controller/room_reservations.controller.inc',
   );
+  $items['room_reservations/outlook-import'] = array(
+    'title' => t('Import from Outlook'),
+    'description' => t('Pull in meeting data from Outlook'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('room_reservations_request'),
+    'access arguments' => array('administer room reservations system'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   return $items;
 }
 
@@ -631,5 +639,55 @@ function room_reservations_theme_registry_alter(&$theme_registry) {
       $theme_registry[$key]['type'] = 'module';
     }
   }
-  
 }
+
+function room_reservations_request($form, $form_state) {
+  // These two enable AJAX compatibility in old IE
+  drupal_add_js('//cdnjs.cloudflare.com/ajax/libs/bluebird/3.3.4/bluebird.min.js', 'external');
+  drupal_add_js('//cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js', 'external');
+  // This one runs the Microsoft API integration
+  drupal_add_js('https://secure.aadcdn.microsoftonline-p.com/lib/0.1.3/js/msal.min.js', 'external');
+  // This runs the web app
+  drupal_add_js(drupal_get_path('module', 'room_reservations') . '/js/outlook.js');
+  // And this has the web app configuration data
+  drupal_add_js(drupal_get_path('module', 'room_reservations') . '/js/msalconfig.js');
+  // Here we insert the list of rooms so the web app can match them up with Outlook events
+  $rooms_query = new EntityFieldQuery();
+  $rooms_query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'room_reservations_room');
+  $result = $rooms_query->execute();
+  $rooms = node_load_multiple(array_keys($result['node']));
+  drupal_add_js(array(
+    'room_reservations' => array(
+      'rooms' => $rooms,
+    ),
+  ), 'setting');
+  $form['outlook_signin'] = array(
+    '#type' => 'button',
+    '#value' => t('Sign into Outlook'),
+    '#description' => t('Click to sign into your Outlook credentials for calendar access.'),
+  );
+  $form['status_element'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('element-invisible'),
+    ),
+  );
+  $form['error_messages'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('element-invisible'),
+    ),
+  );
+  $form['signout'] = array(
+    '#type' => 'button',
+    '#value' => t('Sign Out of Outlook'),
+    '#attributes' => array(
+//      'class' => array('element-invisible'),
+    ),
+  );
+
+  return $form;
+  
+} 
+ 

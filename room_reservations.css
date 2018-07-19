@@ -299,3 +299,20 @@
 #rooms-calendar .panelContainer {
   padding: 0.5rem;
 }
+
+#outlook-calendar-status {
+  display: flex;
+}
+
+#outlook-calendar-status .outlook-calendar {
+  flex: auto;
+}
+  
+#outlook-calendar-status .outlook-calendar-event-data {
+  margin: 0;
+  padding: 0;
+}
+
+#outlook-calendar-status .outlook-calendar-event {
+  margin-bottom: 15px;
+}
