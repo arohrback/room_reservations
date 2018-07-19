@@ -174,21 +174,21 @@ function theme_room_reservations($variables) {
     // Count the number of rooms in the selected category.
     $rooms_per_category = 0;
     foreach ($rooms as $room) {
-      $rid = $room['nid'];
-      if (!empty($room['field_reservations_room_category'][LANGUAGE_NONE][0]['target_id']) && $room['field_reservations_room_category'][LANGUAGE_NONE][0]['tid'] == $category->tid) {
+      $rid = $room->nid;
+      if (!empty($room->field_reservations_room_category[LANGUAGE_NONE][0]['target_id']) && $room['field_reservations_room_category'][LANGUAGE_NONE][0]['tid'] == $category->tid) {
         $rooms_per_category++;
       }
     }
     
     // Column for each room in the category.
     foreach ($rooms as $room) {
-      $rid = $room['nid'];
-      $room_name = $room['title'];
+      $rid = $room->nid;
+      $room_name = $room->title;
       $room_link = l($room_name, 'node/' . $rid);
-      $room_view = node_view((object) $room, 'reservation_calendar');
+      $room_view = node_view($room, 'reservation_calendar');
       $room_header = drupal_render($room_view);
 
-      if ($room['field_reservations_room_category'][LANGUAGE_NONE][0]['tid'] == $category->tid) {
+      if ($room->field_reservations_room_category[LANGUAGE_NONE][0]['tid'] == $category->tid) {
         $c++; $r = 0;
         // Room name, capacity.
         $table[$r][$c] = '<li class="room-info">' . $room_header . '</li>';

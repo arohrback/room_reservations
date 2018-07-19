@@ -7,7 +7,77 @@
  * @author Andy Rohrback, Systems Analyst, Iowa State University Agronomy Department
  */
 
-
+/**
+ *  Define the field groups for our content types.
+ *  @return array
+ *    An array of field group objects.
+ */
+function _room_reservations_field_groups() {
+  $field_groups = array();
+  $hours_group = new stdClass();
+  $hours_group->disabled = FALSE;
+  $hours_group->api_version = 1;
+  $hours_group->identifier = 'group_hours|node|room_reservations_room|form';
+  $hours_group->group_name = 'group_hours';
+  $hours_group->entity_type = 'node';
+  $hours_group->bundle = 'room_reservations_room';
+  $hours_group->mode = 'form';
+  $hours_group->parent_name = '';
+  $hours_group->data = array(
+    'label' => 'Hours',
+    'weight' => '9',
+    'children' => array(
+    ),
+    'format_type' => 'fieldset',
+    'format_settings' => array(
+      'label' => 'Hours',
+      'formatter' => 'collapsible',
+      'instance_settings' => array(
+        'description' => '',
+        'classes' => 'group-hours field-group-fieldset',
+        'required_fields' => 1,
+        'id' => '',
+      ),
+    ),
+  );
+  $days = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
+  for ($i=0;$i<count($days);$i++) {
+    $day = $days[$i];
+    $lday = lcfirst($day);
+    $field_group = new stdClass();
+    $field_group->disabled = FALSE;
+    $field_group->api_version = 1;
+    $field_group->identifier = "group_hours_$lday|node|room_reservations_room|form";
+    $field_group->group_name = "group_hours_$lday";
+    $field_group->entity_type = 'node';
+    $field_group->bundle = 'room_reservations_room';
+    $field_group->mode = 'form';
+    $field_group->parent_name = 'group_hours';
+    $field_group->data = array(
+      'label' => $day . ' hours',
+      'weight' => $i+1,
+      'children' => array(
+        0 => 'field_' . $lday . '_open',
+        1 => 'field_' . $lday . '_close',
+      ),
+      'format_type' => 'fieldset',
+      'format_settings' => array(
+        'label' => $day . ' hours',
+        'formatter' => 'collapsible',
+        'instance_settings' => array(
+          'description' => '',
+          'classes' => 'group-hours-' . $lday . ' field-group-fieldset',
+          'required_fields' => 1,
+          'id' => '',
+        ),
+      ),
+    );
+    $field_groups[0]->data['children'][] = $field_group->group_name;
+    $field_groups[] = $field_group;
+  }
+  $field_groups[] = $hours_group;
+  return $field_groups;
+}
 /**
  * Define the fields for our content types.
  * @return array
@@ -15,7 +85,7 @@
  *   new node type.
  */
 function _room_reservations_installed_fields() {
-  return array(
+  $fields = array(
     'field_reservation_approved' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -549,10 +619,63 @@ function _room_reservations_installed_fields() {
     ),
 
   );
+  $days = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
+  foreach ($days as $day) {
+    $lday = strtolower($day);
+    $close_base = array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'field_' . $lday . '_close',
+      'field_permissions' => array(
+        'type' => 0,
+      ),
+      'indexes' => array(
+        'value' => array(
+          0 => 'value',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'list',
+      'settings' => array(
+        'allowed_values' => _room_reservations_time_slots(),
+        'allowed_values_function' => '',
+      ),
+      'translatable' => 0,
+      'type' => 'list_text',
+    );
+    $open_base = array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'field_' . $lday . '_open',
+      'field_permissions' => array(
+        'type' => 0,
+      ),
+      'indexes' => array(
+        'value' => array(
+          0 => 'value',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'list',
+      'settings' => array(
+        'allowed_values' => _room_reservations_time_slots(),
+        'allowed_values_function' => '',
+      ),
+      'translatable' => 0,
+      'type' => 'list_text',
+    );
+    $fields['field_' . $lday . '_close'] = $close_base;
+    $fields['field_' . $lday . '_open'] = $open_base;
+  }
+  return $fields;
 }
  
 function _room_reservations_installed_instances_room() {
-  return array(
+  $instances = array(
     'field_reservations_equipment' => array(
       'default_value' => NULL,
       'deleted' => 0,
@@ -890,6 +1013,101 @@ function _room_reservations_installed_instances_room() {
       ),
     ),
   );
+  $days = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
+  foreach ($days as $day) {
+    $lday = strtolower($day);
+    $instances['field_' . $lday . '_open'] = array(
+      'bundle' => 'room_reservations_room',
+      'default_value' => array(
+        0 => array(
+          'value' => 'None',
+        ),
+      ),
+      'deleted' => 0,
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'module' => 'list',
+          'settings' => array(),
+          'type' => 'list_default',
+          'weight' => 14,
+        ),
+        'reservation_calendar' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_' . $lday . '_open',
+      'label' => $day . ' Open',
+      'required' => 1,
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'options',
+        'settings' => array(),
+        'type' => 'options_select',
+        'weight' => 12,
+      ),
+    );
+    $instances['field_' . $lday . '_close'] = array(
+      'bundle' => 'room_reservations_room',
+      'default_value' => array(
+        0 => array(
+          'value' => 'None',
+        ),
+      ),
+      'deleted' => 0,
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'module' => 'list',
+          'settings' => array(),
+          'type' => 'list_default',
+          'weight' => 14,
+        ),
+        'reservation_calendar' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_' . $lday . '_close',
+      'label' => $day . ' Close',
+      'required' => 1,
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'options',
+        'settings' => array(),
+        'type' => 'options_select',
+        'weight' => 12,
+      ),
+    );
+  }
+  return $instances;
 }
 
 function _room_reservations_installed_instances_reservation() {

@@ -7,9 +7,13 @@ Drupal.behaviors.room_reservations.attach = function(context) {
   var anchor = window.location.hash;
   if (anchor) {
     $('.room-tabs a.active').removeClass('active');
-    $('.room-tabs li a[href=' + anchor + ']').addClass('active');
+    $('.room-tabs li a').each(function() {
+      if ($(this).attr('href') == window.location.pathname) {
+        $(this).addClass('active');
+      }
+    });
     $('.panel').hide();
-    $(anchor).show();
+//    $(anchor).show();
   }
   
   // show the selected category panel

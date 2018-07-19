@@ -64,6 +64,13 @@ function room_reservations_enable() {
     $instance['bundle'] = 'room_reservations_reservation';
     field_create_instance($instance);
   } 
+  field_cache_clear();
+
+  // Add fieldgroups for hours.
+  foreach(_room_reservations_field_groups() as $group) {
+    field_group_group_export_delete($group);
+    field_group_group_save($group);
+  }
   
   // Add taxonomies for conference rooms.
   if (taxonomy_vocabulary_machine_name_load('conference_room_equipment') == FALSE) {

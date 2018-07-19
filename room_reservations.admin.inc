@@ -34,7 +34,7 @@ define('ROOM_RESERVATIONS_RESET_ERROR_MSG', t('The configuration options could n
  * Form constructor for the Settings / General page.
  */
 function room_reservations_admin_settings($form, &$form_state) {
-  $options = array(
+  $length_options = array(
     '30' => '30',
     '60' => '60',
     '90' => '90',
@@ -47,6 +47,7 @@ function room_reservations_admin_settings($form, &$form_state) {
     '600' => '600',    
     '720' => '720',
   );
+  $time_slot_options = _room_reservations_time_slots();
   $form['room_reservations_title'] = array(
     '#title' => t('Application name'),
     '#type' => 'textfield',
@@ -91,14 +92,14 @@ function room_reservations_admin_settings($form, &$form_state) {
   $form['room_reservations_max_length_standard'] = array(
     '#title' => t('Maximum reservation length (standard)'),
     '#type' => 'select',
-    '#options' => $options,
+    '#options' => $length_options,
     '#default_value' => variable_get('room_reservations_max_length_standard', 120),
     '#description' => t('The maximum amount of time, in minutes, for which a room can be reserved by a standard user. Default is 120.'),
   );  
   $form['room_reservations_max_length_extended'] = array(
     '#title' => t('Maximum reservation length (extended)'),
     '#type' => 'select',
-    '#options' => $options,
+    '#options' => $length_options,
     '#default_value' => variable_get('room_reservations_max_length_extended', 120),
     '#description' => t('The maximum amount of time, in minutes, for which a room can be reserved by an admin. Default is 120.'),
   );
@@ -116,15 +117,6 @@ function room_reservations_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('room_reservations_before_after_hours', 3),
     '#description' => t('The number of hours before the first and last open slots for the day that are shown on the calendar. The default is to display the entire day.'),
   );
-  $form['room_reservations_calendar_flipped'] = array(
-    '#title' => t('Flip orientation of calendar display.'),
-    '#type' => 'checkbox',
-    '#return_value' => 1,
-    '#default_value' => variable_get('room_reservations_calendar_flipped', 0),
-    '#description' => t('The default orientation of the calendar display has rooms listed along the top and hours along the left side. Selecting this checkbox will
-      flip this to display hours along the top and the rooms listed along the left side. This can be useful for categories with a very large number of rooms. NOTE:
-      custom CSS will most likely be required to allow all the hour slots to fit the width of your theme.'),
-  );   
   $form['room_reservations_compressed_labels'] = array(
     '#title' => t('Use smaller labels on calendar display.'),
     '#type' => 'checkbox',
@@ -133,6 +125,30 @@ function room_reservations_admin_settings($form, &$form_state) {
     '#description' => t('The default display shows the room title and room capacity on both sides of the calendar display. Selecting this option shows only the room title on one side.'),
   );
   
+  $form['room_reservations_default_hours'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Default room hours'),
+    '#description' => t('Open and closing times for rooms that do not have their own specific hours.'),
+    '#collapsible' => true,
+    '#collapsed' => true,
+  );
+  $form['room_reservations_default_hours']['room_reservations_default_open'] = array(
+    '#type' => 'select',
+    '#title' => t('Open'),
+    '#default_value' => variable_get('room_reservations_default_open', '0000'),
+    '#options' => $time_slot_options,
+  );
+  $form['room_reservations_default_hours']['room_reservations_default_close'] = array(
+    '#type' => 'select',
+    '#title' => t('Close'),
+    '#default_value' => variable_get('room_reservations_default_close', '2400'),
+    '#options' => $time_slot_options,
+  );
+  $form['room_reservations_default_hours']['room_reservations_default_days'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Days open'),
+    '#options' => drupal_map_assoc(array(t('Sunday'), t('Monday'), t('Tuesday'), t('Wednesday'), t('Thursday'), t('Friday'), t('Saturday'))),
+  );
   $form['room_reservations_date_displays'] = array(
     '#type' => 'fieldset',
     '#title' => t('Date and time display formats'),
@@ -145,15 +161,15 @@ function room_reservations_admin_settings($form, &$form_state) {
     '#description' => t('Enter format in the form "y/m/d", "m/d/y", etc.'),
     '#default_value' => variable_get('room_reservations_picker_format', 'y/m/d'),
   );  
-  $options = array(0 => '1:00 PM', 1 => '13:00');
+  $time_options = array(0 => '1:00 PM', 1 => '13:00');
   $form['room_reservations_date_displays']['room_reservations_hour_format'] = array(
     '#type' => 'radios',
     '#title' => t('Hour format for the calendar display.'),
     '#description' => t('Select either 2:00 PM or 14:00 display format.'),
     '#default_value' => variable_get('room_reservations_hour_format', 0),
-    '#options' => $options,
+    '#options' => $time_options,
   );
-    
+      
   return system_settings_form($form);
 }
 

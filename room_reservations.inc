@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Classes and general Room Reservations helper functions.
+ * General Room Reservations helper functions.
  */
 
 /**
@@ -21,7 +21,7 @@ function _room_reservations_rooms() {
     $rids = array_keys($result['node']);
     $room_objs = node_load_multiple($rids);
     foreach ($room_objs as $room) {
-      $rooms[$room->nid] = (array) $room;  
+      $rooms[$room->nid] = $room;  
     }
   }
   return $rooms;
@@ -160,7 +160,7 @@ function _room_reservations_dates($selected_month = NULL, $selected_day = NULL, 
     $advancedaysmax = user_access('create room reservations extended') 
       ? variable_get('room_reservations_advance_extended', 180) 
       : variable_get('room_reservations_advance_standard', 14);
-    $advancedaysmin = user_access('bypass minimum advance booking') ? 0 : $room['field_reservations_minadvbooking'][LANGUAGE_NONE][0]['value'];
+    $advancedaysmin = user_access('bypass minimum advance booking') ? 0 : $room->field_reservations_minadvbooking[LANGUAGE_NONE][0]['value'];
     for ($j = $advancedaysmin; $j < $advancedaysmax; $j++) {
       $day = array();
       $day['display'] = date("l, n/j", strtotime("now + " . $j . " days"));
@@ -193,10 +193,10 @@ function _room_reservations_dates($selected_month = NULL, $selected_day = NULL, 
       $day['today'] = (($day['month-number'] == date('m')) &&
         ($day['day'] == date('j'))) ? TRUE : FALSE;
       if ($keyed) {
-        $dates[$room['nid']][$day['yyyymmdd']] = $day;
+        $dates[$room->nid][$day['yyyymmdd']] = $day;
       }
       else {
-        $dates[$room['nid']][] = $day;
+        $dates[$room->nid][] = $day;
       }
     }
   }
@@ -215,7 +215,6 @@ function _room_reservations_dates($selected_month = NULL, $selected_day = NULL, 
  *   An array representing reservable time slots in a single day.
  */
 function _room_reservations_hours($option = NULL) {
-  //watchdog('rr', 'START');
   $hours = array();
   $x = 0;
   $y = 0;
@@ -290,6 +289,37 @@ function _room_reservations_hours($option = NULL) {
   else {
     return $hours;
   }
+}
+
+/**
+ *  Create open hours array by room.
+ */
+
+function _room_reservations_room_hours($rid) {
+  $room_hours = array();
+  if (user_access('create room reservations extended')) {
+    $advancedays = variable_get('room_reservations_advance_extended', 180);
+  }
+  else {
+    $advancedays = variable_get('room_reservations_advance_standard', 14);
+  }
+  // build a list of the months we need to look at
+  for ($x = 0; $x < $advancedays; $x++) { 
+    $months[] = date('Y_m', mktime(0, 0, 0, date("m"), date("d") + $x, date("Y")));
+  }
+  $months = array_unique($months);
+  $hours_data = array(
+    'open' => $open,
+    'open_24_hours' => $open_24_hours,
+    'shifts' => $shifts,
+    'first_shift_open' => $first_shift_open,
+    'first_shift_close' => $first_shift_close,
+    'second_shift_open' => $second_shift_open,
+    'second_shift_close' => $second_shift_close,
+    'display' => $display,
+  );
+  $room_hours[($yyyymmdd)] = $hours_data;
+  return $room_hours;
 }
 
 /**
@@ -407,7 +437,6 @@ function _room_reservations_facility_hours($reset = FALSE) {
  *   'Open 24 Hours' or 'Noon - 6:00 PM'.
  */
 function _room_reservations_hours_display($day_hours) {
-  $hours = _room_reservations_hours();
   $first_shift_open = $day_hours[0];
   $first_shift_close = $day_hours[1];
   $second_shift_open = $day_hours[2];
@@ -493,115 +522,6 @@ function _room_reservations_display_time($military_time) {
     }
   }
   return '';
-}
-
-/**
- * Determine closing times.
- *
- * Determines which half hour time slots represent the last ones before the
- * building closes.
- *
- * @param string $yyyymmdd
- *   The date for which close times are being determine, in the format
- *   YYYY-MM-DD.
- *
- * @return array
- *   An array representing the time slots just before closing.  The array can
- *   contain 0, 1, or 2 items.
- */
-function _room_reservations_close_times($yyyymmdd) {
-  $closing_times = array();
-  $_room_reservations_building_hours = _room_reservations_facility_hours();
-  $building_hours_day = $_room_reservations_building_hours[$yyyymmdd];
-  // 24 hours.
-  if ($building_hours_day['open_24_hours']) {
-    $next_day = date('Y-m-d', strtotime("$yyyymmdd +1 days"));
-    $next_day_first_time_slot_open
-      = _room_reservations_first_slot_open($next_day);
-    if (!$next_day_first_time_slot_open) {
-      $closing_times[] = '2330';
-    }
-    return $closing_times;
-  }
-  // First shift ends at midnight.
-  if ($building_hours_day['first_shift_close'] === '2400') {
-    $next_day = date('Y-m-d', strtotime("$yyyymmdd +1 days"));
-    $next_day_first_time_slot_open
-      = _room_reservations_first_slot_open($next_day);
-    if (!$next_day_first_time_slot_open) {
-      $closing_times[] = '2330';
-    }
-    return $closing_times;
-  }
-  // First shift does not end at midnight.
-  $time = $building_hours_day['first_shift_close'];
-  $hours = _room_reservations_hours();
-  $time_found = FALSE;
-  while (!$time_found) {
-    $time_slot = array_pop($hours);
-    if ($time_slot['time'] == $time) {
-      $time_found = TRUE;
-    }
-  }
-  $time_slot = array_pop($hours);
-  $int_second_shift_close = intval($building_hours_day['second_shift_close']);
-  $closing_times[] = $time_slot['time'];
-  // Second shift ends at midnight.
-  if (($building_hours_day['shifts'] == 2) && 
-    ($int_second_shift_close == 2400)) {
-    $next_day = date('Y-m-d', strtotime("$yyyymmdd +1 days"));
-    $next_day_first_time_slot_open
-      = _room_reservations_first_slot_open($next_day);
-    if (!$next_day_first_time_slot_open) {
-      $closing_times[] = '2330';
-    }
-  }
-  // Second shift does not end at midnight.
-  if (($building_hours_day['shifts'] == 2) && 
-  ($int_second_shift_close < 2400)) {
-    $time = $building_hours_day['second_shift_close'];
-    $hours = _room_reservations_hours();
-    $time_found = FALSE;
-    while (!$time_found) {
-      $time_slot = array_pop($hours);
-      if ($time_slot['time'] == $time) {
-        $time_found = TRUE;
-      }
-    }
-    $time_slot = array_pop($hours);
-    $closing_times[] = $time_slot['time'];
-  }
-  return $closing_times;
-}
-
-/**
- * Determine if facility is open from midnight to 12:30 AM.
- *
- * Determines if the facility is open during the first half hour of the day,
- * from midnight to 12:30 AM.  This information is needed when determining if
- * any particular half hour time slot is the last one before the building
- * closes.
- *
- * @param string $yyyymmdd
- *   The date being examined, in the format YYYY-MM-DD.
- *
- * @return bool
- *   TRUE - The facility is open during the first half hour of the day.
- *   FALSE - The facility is not open during the first half hour of the day.
- */
-function _room_reservations_first_slot_open($yyyymmdd) {
-  $_room_reservations_building_hours = _room_reservations_facility_hours();
-  $building_hours_day = $_room_reservations_building_hours[$yyyymmdd];
-  if (!$building_hours_day['open']) {
-    return FALSE;
-  }
-  if ($building_hours_day['open_24_hours']) {
-    return TRUE;
-  }
-  if ($building_hours_day['first_shift_open'] == '0000') {
-    return TRUE;
-  }
-  return FALSE;
 }
 
 /**
@@ -829,7 +749,7 @@ function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $a
   // need to limit these valid lengths by a prebuffer if it exists for the room
   // but only if not permissions to do this
   if (!user_access('book over buffer')) {
-    $preslots = $rooms[$rid]['field_reservations_prebuffer'][LANGUAGE_NONE][0]['value'] / 30;
+    $preslots = $rooms[$rid]->field_reservations_prebuffer[LANGUAGE_NONE][0]['value'] / 30;
     if ($preslots) {
       foreach ($valid_lengths as $index => $length) {
         if ($length['is_valid'] == false) {
@@ -846,10 +766,12 @@ function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $a
   }
 
   // Determine if the reservation at each possible length would conflict with
-  // the hours that the building is closed.  If so, set is_valid for that
+  // the hours that the room is closed.  If so, set is_valid for that
   // length to FALSE.  The first time slot has already been validated and
   // does not need to be checked again.
   $_room_reservations_building_hours = _room_reservations_facility_hours();
+  // Get the hours for the room, not the building.
+  $_room_reservations_room_hours = _room_reservations_room_hours($rid);
   $conflicts_found = FALSE;
   for ($x = 0; $x < $max_slots; $x++) {
     $valid_length = $valid_lengths[$x];
@@ -857,11 +779,11 @@ function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $a
       $search_item = $search_items[$x];
       $date = $search_item['date'];
       $start_time = $search_item['start_time'];
-      if (!isset($_room_reservations_building_hours[$date])) {
+      if (!isset($_room_reservations_room_hours[$date])) {
         $conflicts_found = TRUE;
         break;
       }
-      $building_hours_day = $_room_reservations_building_hours[$date];
+      $building_hours_day = $_room_reservations_room_hours[$date];
       // If building is closed, set conflict flag.
       if (!$building_hours_day['open']) {
         $conflicts_found = TRUE;
@@ -1086,6 +1008,34 @@ function _room_reservations_delete_variable($key) {
     return $result;
   }
   return FALSE;
+}
+
+function _room_reservations_time_slots() {
+  $time_slot_options = array(
+    'None' => '- None -',
+  );
+  for ($i=0;$i<25;$i++) {
+    $t = $i < 10 ? '0'.$i : $i;
+    if ($i == 0) {
+      $time_slot_options[$t.'00'] = 'Midnight (start of day)';
+      $time_slot_options[$t.'30'] = "12:30 AM";
+    }
+    else if ($i == 12) {
+      $time_slot_options[$t.'00'] = 'Noon';
+      $time_slot_options[$t.'30'] = "$i:30 PM";
+    }
+    else if ($i > 12) {
+      $a = $i - 12;
+      $time_slot_options[$t.'00'] = "$a:00 PM";
+      if ($i < 24)
+        $time_slot_options[$t.'30'] = "$a:30 PM";
+    } else {
+      $time_slot_options[$t.'00'] = "$i:00 AM";
+      $time_slot_options[$t.'30'] = "$i:30 AM";
+    }
+  }
+  $time_slot_options['2400'] = 'Midnight (end of day)';
+  return $time_slot_options;
 }
 
 function _room_reservations_is_slot_free($rid, $yyyymmdd, $time, $length) {

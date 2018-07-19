@@ -122,10 +122,10 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
   // Initialize the $reservations array.
   $reservations = array();
   foreach ($rooms as $room) {
-    $room_name = $room['name'];
+    $room_name = $room->name;
     foreach ($hours as $time_slot) {
       $time = $time_slot['time'];
-      $reservations[$room['nid']][$time] = array(
+      $reservations[$room->nid][$time] = array(
         'time' => $time,
         'display' => $time_slot['display'],
         'class' => $time_slot['class'],
