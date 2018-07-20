@@ -227,7 +227,7 @@
         var $createBtn = $('<input type="submit">').attr({name: 'createEvent', value: 'Import Event'}).appendTo($form);
         $form.submit(function(e) {
           e.preventDefault();
-          var url = '/agronomy/room_reservations/outlook-import-event';
+          var url = Drupal.settings.basePath + 'room_reservations/outlook-import-event';
           $.ajax({
             type: "POST",
             url: url,
