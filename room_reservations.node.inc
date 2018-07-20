@@ -235,6 +235,8 @@ function _room_reservations_installed_fields() {
           1 => 'No repeat',
           2 => 'Repeat all days until',
           3 => 'Repeat this day of the week until',
+          4 => 'Repeat this day every other week until',
+          5 => 'Repeat this day of this week of every month until',
         ),
         'allowed_values_function' => '',
       ),

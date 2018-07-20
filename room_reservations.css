@@ -315,4 +315,9 @@
 
 #outlook-calendar-status .outlook-calendar-event {
   margin-bottom: 15px;
+  padding: 1em;
+  font-size: 1rem;
+}
+.outlook-calendar-event.recurring {
+    background-color: #ddd;
 }

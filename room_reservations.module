@@ -727,9 +727,10 @@ function room_reservations_import_from_outlook() {
   $meeting_time = strtotime($event['startTime']);
   $hours = date('G', $meeting_time);
   $minutes = date('i', $meeting_time);
-  $meeting_date = date('Y-m-d G:i:s', $meeting_time);
+  $repeat_end = strtotime('+360 days', $meeting_time);
   $minutes = $minutes > 30 ? '30' : '00';
-//  file_put_contents('/var/drupalfiles/agronomy_files/tmp/drupal_debug.txt', print_r($result, TRUE), FILE_APPEND);
+  // Round up the duration to the nearest half-hour interval.
+  $event['duration'] = 30 * ceil($event['duration'] / 30);
   // Create a new room reservation node.
   $values = array(
     'type' => 'room_reservations_reservation',
@@ -751,5 +752,31 @@ function room_reservations_import_from_outlook() {
   $wrapper->field_reservation_time->set($hours . $minutes);
   $wrapper->field_reservation_length->set($event['duration']);
   $wrapper->body->set(array('value' => $event['description']));
+  if (isset($event['recurrence'])) {
+    $event['recurrence'] = json_decode($event['recurrence']);
+    // set repeat end date to 360 days from the first meeting
+    // this module doesn't support endless recurrence so this will have to do
+    $wrapper->field_reservation_repeat_until->set($repeat_end);
+    switch($event['recurrence']->pattern->type) {
+      case 'daily':
+        $wrapper->field_reservation_repeat_type->set('2');
+        break;
+      case 'weekly':
+        switch($event['recurrence']->pattern->interval) {
+          case 1:
+            $wrapper->field_reservation_repeat_type->set('3');
+            break;
+          case 2:
+            $wrapper->field_reservation_repeat_type->set('4');
+            break;
+        }
+        break;
+      case 'relativeMonthly':
+        $wrapper->field_reservation_repeat_type->set('5');
+        break;
+    }
+  } else {
+    $wrapper->field_reservation_repeat_type->set('1');
+  }
   $wrapper->save();
 }
