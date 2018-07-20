@@ -194,8 +194,9 @@
       function createEventDiv(event, roomName) {
         var $eventDiv = $('<div>', {class: 'outlook-calendar-event'});
         var $date = $('<p>', {class: 'outlook-calendar-event-data outlook-calendar-event-date'});
-        var startTime = new Date(event.start.dateTime);
-        var endTime = new Date(event.end.dateTime);
+        var startTime = new Date(event.start.dateTime+"Z");
+        var endTime = new Date(event.end.dateTime+"Z");
+        console.log(event.start.dateTime, startTime);
         var durationMs = (endTime - startTime);
         var durationMin = Math.floor(durationMs  / 60000);
         $date.text(startTime.toLocaleDateString("en-US", {hour: 'numeric', minute: '2-digit', second: '2-digit'}));
