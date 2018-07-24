@@ -27,8 +27,7 @@
       var calendars = new Object();
       var nowDate = new Date();
       var startDateTime = nowDate.toISOString();
-//      nowDate.setYear(nowDate.getFullYear() + 1);
-      nowDate.setMonth(nowDate.getMonth() + 1);
+      nowDate.setYear(nowDate.getFullYear() + 1);
       var endDateTime = nowDate.toISOString();
       let calendarURLs = Object.keys(meetingRooms).map((id) => {
         return `https://graph.microsoft.com/v1.0/users/${id}@mail.iastate.edu/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}`;
@@ -196,7 +195,6 @@
         var $date = $('<p>', {class: 'outlook-calendar-event-data outlook-calendar-event-date'});
         var startTime = new Date(event.start.dateTime+"Z");
         var endTime = new Date(event.end.dateTime+"Z");
-        console.log(event.start.dateTime, startTime);
         var durationMs = (endTime - startTime);
         var durationMin = Math.floor(durationMs  / 60000);
         $date.text(startTime.toLocaleDateString("en-US", {hour: 'numeric', minute: '2-digit', second: '2-digit'}));

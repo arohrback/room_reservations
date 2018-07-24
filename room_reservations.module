@@ -261,6 +261,10 @@ function room_reservations_node_access($nodetype_or_node, $op, $account) {
         switch ($op) {
           case 'create':
             // if we are trying to create a reservation let's make sure user hasn't just entered dates via url
+            // if there aren't any URL arguments then never mind
+            if (arg(3) == NULL) {
+              return NODE_ACCESS_IGNORE;
+            }
             // since available lengths takes allowed dates into account; lets just use that
             $yyyymmdd = _room_reservations_yyyymmdd((int) arg(3), (int) arg(4));
             $lengths = _room_reservations_valid_lengths(arg(6), $yyyymmdd, arg(5));
