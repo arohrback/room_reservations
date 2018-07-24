@@ -314,6 +314,8 @@ function room_reservations_form_user_admin_permissions_alter(&$form, &$form_stat
 
 function room_reservations_form_room_reservations_reservation_node_form_alter(&$form, &$form_state) {
   // params either passed in on url -  CREATE
+  global $user;
+  $form['field_reservation_contact_email'][LANGUAGE_NONE][0]['email']['#default_value'] = empty($form['field_reservation_contact_email'][LANGUAGE_NONE][0]['email']['#default_value']) ? $user->mail : $form['field_reservation_contact_email'][LANGUAGE_NONE][0]['email']['#default_value'];
   // or pulled from node - EDIT
   if (user_access('administer site configuration') && isset($_GET['edit']) && $_GET['edit'] == 'standard') {
     return;
