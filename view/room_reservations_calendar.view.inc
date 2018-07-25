@@ -162,13 +162,13 @@ function theme_room_reservations($variables) {
     // this is the main DIV wrapper for the "table" within each Category
     $output .= '<div id="' . $id . '" class="panel ' . $show . '"><div class="gcolumns' . ' ' . $orientclass . '">';
     
-    $table[$r][$c] = "<li class='room-info'>" . t('Room') . '</li>';
+    $table[$r][$c] = "<div class='room-info'>" . t('Room') . '</div>';
     $r++;
    
     // Available hours column.
     foreach ($hours as $time_slot) {
       $time_display = ($time_slot['class'] == 'odd') ? t($time_slot['display']) : "";
-      $table[$r][$c] = "<li class='" . $time_slot['class'] . " timeslot' time='" . $time_slot['time'] . "' " . '>' . $time_display . '</li>';
+      $table[$r][$c] = "<div class='" . $time_slot['class'] . " timeslot' time='" . $time_slot['time'] . "' " . '>' . $time_display . '</div>';
       $r++;
     }
     // Count the number of rooms in the selected category.
@@ -191,7 +191,7 @@ function theme_room_reservations($variables) {
       if ($room['field_reservations_room_category'][LANGUAGE_NONE][0]['tid'] == $category->tid) {
         $c++; $r = 0;
         // Room name, capacity.
-        $table[$r][$c] = '<li class="room-info">' . $room_header . '</li>';
+        $table[$r][$c] = '<div class="room-info">' . $room_header . '</div>';
         // Populate each time slot.
         foreach ($hours as $time_slot) {
           $r++;
@@ -286,7 +286,7 @@ function theme_room_reservations($variables) {
           if (stristr($slotclass, 'setup')) {
             $booked_class = '';
           }
-          $table[$r][$c] = "<li class='" . $slotclass . ' ' . $booked_class . ' ' . $custom_class . ' ' . $viewable_class .  ' ' . $widthclass. "'>" . $link . "</li>";
+          $table[$r][$c] = "<div class='" . $slotclass . ' ' . $booked_class . ' ' . $custom_class . ' ' . $viewable_class .  ' ' . $widthclass. "'>" . $link . "</div>";
         }
         // Room name and capacity.
       }

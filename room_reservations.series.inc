@@ -60,6 +60,34 @@ function room_reservations_insert($node) {
 
   // set NID as Series ID for both the primary node and the repeat nodes
   $node->field_reservation_seriesid[LANGUAGE_NONE][0]['value'] = $node->nid;
+  $now = time();
+  // if this date is in the past, skip to the first occurrence in the future
+  if (strtotime($start) < $now) {
+    $date = $start;
+    $booked = array();
+    if ($rtype == 5) {
+      // Book appointments every Xth Yday of the month
+      // Get the index week of this weekday
+      $week = floor(date('j', strtotime($start)) / 7);
+      $indexes = array('first', 'second', 'third', 'fourth', 'fifth');
+      $week_index = $indexes[$week];
+      // Get the weekday
+      $wday = date('l', strtotime($start));
+      $this_month = strtotime('first day of this month', strtotime($date));
+      $next_month = date('F Y', strtotime('+1 month', $this_month));
+      $date = date('Y-m-d', strtotime("$week_index $wday of $next_month"));
+      while (strtotime($date) < strtotime($end) && strtotime($date) < $now) {
+        $this_month = strtotime('first day of this month', strtotime($date));
+        $next_month = date('F Y', strtotime('+1 month', $this_month));
+        $date = date('Y-m-d', strtotime("$week_index $wday of $next_month"));
+      }
+    } else {
+      while (strtotime($date) <= strtotime($back, strtotime($end)) && strtotime($date) < $now) {
+        $date = date('Y-m-d', strtotime($skip, strtotime($date)));
+      }
+    }
+    $node->field_reservation_date[LANGUAGE_NONE][0]['value'] = $date . ' 00:00:00';    // added 12:00:00 to fix TZ issues; this is unlikely correct way to do this
+  }
   
   $tmp = clone($node);
   unset($tmp->nid, $tmp->vid);   
@@ -79,16 +107,13 @@ function room_reservations_insert($node) {
     $next_month = date('F Y', strtotime('+1 month', $this_month));
     $date = date('Y-m-d', strtotime("$week_index $wday of $next_month"));
     while (strtotime($date) < strtotime($end)) {
-      file_put_contents('/var/drupalfiles/agronomy_files/tmp/drupal_debug.txt', "$week_index $wday of $next_month", FILE_APPEND);
       if (_room_reservations_is_slot_free($rid, $date, $time, $length)) {
-      file_put_contents('/var/drupalfiles/agronomy_files/tmp/drupal_debug.txt', " is available\n", FILE_APPEND);
         $new = clone($tmp);
         $new->field_reservation_date[LANGUAGE_NONE][0]['value'] = $date . ' 00:00:00';    // added 12:00:00 to fix TZ issues; this is unlikely correct way to do this
         $new->saved = true;
         node_save($new);
       }
       else {
-      file_put_contents('/var/drupalfiles/agronomy_files/tmp/drupal_debug.txt', " is booked\n", FILE_APPEND);
         $booked[] = $date;
       }
       $this_month = strtotime('first day of this month', strtotime($date));
@@ -163,9 +188,12 @@ function room_reservations_update($node) {
       // first 2 are easy; but to change length we need to check if that period is available and if not delete entry from Series
       $data->title = $node->title;
       $data->field_reservation_private[LANGUAGE_NONE][0]['value'] = $node->field_reservation_private[LANGUAGE_NONE][0]['value'];
-      
+      if ($data->saved) {
+        continue;
+      }
       $date = date('Y-m-d', strtotime($data->field_reservation_date[LANGUAGE_NONE][0]['value']));
-      if (_room_reservations_is_slot_free($rid, $date, $time, $length)) {
+      
+      if (_room_reservations_is_slot_free($rid, $date, $time, $length, $sid)) {
         $data->field_reservation_length[LANGUAGE_NONE][0]['value'] = $node->field_reservation_length[LANGUAGE_NONE][0]['value'];
         $data->saved = true;
         node_save($data);

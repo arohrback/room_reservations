@@ -629,10 +629,48 @@ function room_reservations_action_info() {
 
 function room_reservations_bulk_approve(&$node, $context) {
   $node->field_reservation_approved[LANGUAGE_NONE][0]['value'] = 1;
+  if (!empty($node->field_reservation_seriesid[LANGUAGE_NONE][0]['value'])) {
+    $series_id = $node->field_reservation_seriesid[LANGUAGE_NONE][0]['value'];
+    if ($node->nid == $series_id) {
+      $query = new EntityFieldQuery();
+      $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'room_reservations_reservation')
+        ->fieldCondition('field_reservation_seriesid', 'value', $series_id, '=');
+      $result = $query->execute();
+      if (isset($result['node']) && count($result['node']) > 0) {
+        $series_nids = array_keys($result['node']);
+        $series_nodes = entity_load('node', $series_nids);
+        foreach($series_nodes as $series_node) {
+          $series_node->field_reservation_approved[LANGUAGE_NONE][0]['value'] = 1;
+          $series_node->saved = TRUE;
+          node_save($series_node);
+        }
+      }
+    }
+  }
 }
 
 function room_reservations_bulk_unapprove(&$node, $context) {
   $node->field_reservation_approved[LANGUAGE_NONE][0]['value'] = 0;
+  if (!empty($node->field_reservation_seriesid[LANGUAGE_NONE][0]['value'])) {
+    $series_id = $node->field_reservation_seriesid[LANGUAGE_NONE][0]['value'];
+    if ($node->nid == $series_id) {
+      $query = new EntityFieldQuery();
+      $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'room_reservations_reservation')
+        ->fieldCondition('field_reservation_seriesid', 'value', $series_id, '=');
+      $result = $query->execute();
+      if (isset($result['node']) && count($result['node']) > 0) {
+        $series_nids = array_keys($result['node']);
+        $series_nodes = entity_load('node', $series_nids);
+        foreach($series_nodes as $series_node) {
+          $series_node->field_reservation_approved[LANGUAGE_NONE][0]['value'] = 0;
+          $series_node->saved = TRUE;
+          node_save($series_node);
+        }
+      }
+    }
+  }
 }
 
 function room_reservations_theme_registry_alter(&$theme_registry) {

@@ -88,14 +88,11 @@
 #rooms-calendar .panel .gcolumns .grid-column, #rooms-calendar table.reservation-grid {
   float: left;
   border: none;
-  width: auto;
+  width: 100%;
 }
 
-#rooms-calendar table.reservation-grid tr {
-  border: none;
-}
-#rooms-calendar table.reservation-grid td {
-  border: none;
+#rooms-calendar table.reservation-grid tr, #rooms-calendar table.reservation-grid td {
+  border: 1px solid #999 !important;
 }
 #rooms-calendar table.reservation-grid td.reservation-slot {
   max-width: 115px;
@@ -107,6 +104,7 @@
 }
 #rooms-calendar table.reservation-grid tr:first-of-type td.reservation-slot {
   border: none;
+  vertical-align: top;
 }
 #rooms-calendar .panel .gcolumns ul {
   padding: 0 1px;
@@ -148,17 +146,17 @@
 }
 
 #rooms-calendar .panel .gcolumns li.timeslot {
-  background-color: #fff;
+  background-color: transparent;
   *height: 1.33em;
   *margin-bottom: 2px;
 }
 
 #rooms-calendar .panel .gcolumns li.reservable {
-  background-color: #fff;
+  background-color: transparent;
 }
 
 #rooms-calendar .panel .gcolumns li.open {
-  background-color: #fff;
+  background-color: transparent;
 }
 
 #rooms-calendar .panel .gcolumns li.booked {
@@ -180,7 +178,7 @@
 
 #rooms-calendar .panel .gcolumns li.closed {
   background-color: #d1dfdf;
-  border: 1px solid #d1dfdf;
+/*  border: 1px solid #d1dfdf; */
 }
 
 #rooms-calendar .hide {
@@ -190,17 +188,22 @@
 #rooms-calendar .calendar-header h3 {
   padding: 0;
   margin: 0 0 0.25em;
-  font-size: 1rem;
+  font-family: nimbus-sans, sans-serif;
+  font-size: .8rem;
 }
 #rooms-calendar .calendar-header .field {
   margin-bottom: 3px;
 }
-#rooms-calendar .calendar-header .field-label {
+#rooms-calendar .calendar-header .field-label, #room-calendar .field-item {
   padding: 0;
   margin: 0;
+  font-size:.9em;
 }
 #rooms-calendar .calendar-header .field-name-field-reservations-equipment .field-item {
   display: block;
+}
+.field-name-field-reservations-room-food-ok .field-item {
+  font-size: .95em;
 }
 .page-room-reservations .form-item label {
   display: inline;
@@ -265,7 +268,7 @@
 }
 
 #rooms-calendar ul li.reservable:hover, #rooms-calendar ul li.open:hover {
-  background-color:#FFF;
+  background-color:transparent;
 }
 
 
@@ -320,4 +323,10 @@
 }
 .outlook-calendar-event.recurring {
     background-color: #ddd;
+}
+#rooms-calendar .field-type-taxonomy-term-reference .field-item a {
+  margin:.25em;
+  margin-bottom:unset;
+  font-size: .8em;
+  padding: 2px 4px;
 }
