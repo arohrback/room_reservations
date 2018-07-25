@@ -725,7 +725,7 @@ function _room_reservations_start_conflicts($room, $yyyymmdd, $time) {
  *   and an indicator showing whether that particular length is valid for the
  *   reservation being made.
  */
-function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $all = FALSE) {
+function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $all = FALSE, $sid = NULL) {
   // let's first ensure this is a valid RID
   $rooms = _room_reservations_rooms();
   if (!isset($rooms[$rid])) {
@@ -816,7 +816,10 @@ function _room_reservations_valid_lengths($rid, $yyyymmdd, $time, $id = NULL, $a
         if (isset($res->field_reservation_seriesid[LANGUAGE_NONE][0]['value']) && $sid = $res->field_reservation_seriesid[LANGUAGE_NONE][0]['value']) {
           $query->fieldCondition('field_reservation_seriesid', 'value', $sid, '!=');
         }
-      }     
+      }
+      else if (!empty($sid)) {
+        $query->fieldCondition('field_reservation_seriesid', 'value', $sid, '!=');
+      }
       $result = $query->execute();
       if (isset($result['node'])) {
         $conflicts_found = true;
@@ -1088,8 +1091,8 @@ function _room_reservations_delete_variable($key) {
   return FALSE;
 }
 
-function _room_reservations_is_slot_free($rid, $yyyymmdd, $time, $length) {
-  $slots = _room_reservations_valid_lengths($rid, $yyyymmdd, $time, NULL, true);
+function _room_reservations_is_slot_free($rid, $yyyymmdd, $time, $length, $sid=NULL) {
+  $slots = _room_reservations_valid_lengths($rid, $yyyymmdd, $time, NULL, true, $sid);
   foreach ($slots as $slot) {
     if ($slot['length'] == $length && $slot['is_valid']) {
       return true;
