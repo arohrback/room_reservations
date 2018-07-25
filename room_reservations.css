@@ -91,6 +91,9 @@
   width: 100%;
 }
 
+#rooms-calendar table.reservation-grid tr, #rooms-calendar table.reservation-grid td {
+  border: 1px solid #999 !important;
+}
 #rooms-calendar table.reservation-grid td.reservation-slot {
   max-width: 115px;
   padding: 0;
