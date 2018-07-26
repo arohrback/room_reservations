@@ -162,13 +162,13 @@ function theme_room_reservations($variables) {
     // this is the main DIV wrapper for the "table" within each Category
     $output .= '<div id="' . $id . '" class="panel ' . $show . '"><div class="gcolumns' . ' ' . $orientclass . '">';
     
-    $table[$r][$c] = "<div class='room-info'>" . t('Room') . '</div>';
+    $table[$r][$c] = "<td class='room-info'>" . t('Room') . '</td>';
     $r++;
    
     // Available hours column.
     foreach ($hours as $time_slot) {
       $time_display = ($time_slot['class'] == 'odd') ? t($time_slot['display']) : "";
-      $table[$r][$c] = "<div class='" . $time_slot['class'] . " timeslot' time='" . $time_slot['time'] . "' " . '>' . $time_display . '</div>';
+      $table[$r][$c] = "<td class='" . $time_slot['class'] . " timeslot' time='" . $time_slot['time'] . "' " . '>' . $time_display . '</td>';
       $r++;
     }
     // Count the number of rooms in the selected category.
@@ -191,7 +191,7 @@ function theme_room_reservations($variables) {
       if ($room['field_reservations_room_category'][LANGUAGE_NONE][0]['tid'] == $category->tid) {
         $c++; $r = 0;
         // Room name, capacity.
-        $table[$r][$c] = '<div class="room-info">' . $room_header . '</div>';
+        $table[$r][$c] = '<td class="room-info">' . $room_header . '</td>';
         // Populate each time slot.
         foreach ($hours as $time_slot) {
           $r++;
@@ -286,7 +286,7 @@ function theme_room_reservations($variables) {
           if (stristr($slotclass, 'setup')) {
             $booked_class = '';
           }
-          $table[$r][$c] = "<div class='" . $slotclass . ' ' . $booked_class . ' ' . $custom_class . ' ' . $viewable_class .  ' ' . $widthclass. "'>" . $link . "</div>";
+          $table[$r][$c] = "<td class='reservation-slot " . $slotclass . ' ' . $booked_class . ' ' . $custom_class . ' ' . $viewable_class .  ' ' . $widthclass. "'>" . $link . "</td>";
         }
         // Room name and capacity.
       }
@@ -312,7 +312,7 @@ function theme_room_reservations($variables) {
     for ($y = 0; $y <= $n; $y++) {
       $output .= "<tr>";
       for ($x = 0; $x <= $m; $x++) {
-        $output .= "<td class='reservation-slot'>{$table[$y][$x]}</td>";
+        $output .= "{$table[$y][$x]}";
       }
       $output .= "</tr>";
     }
