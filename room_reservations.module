@@ -518,7 +518,9 @@ function return_to_reservations_page($form, &$form_state) {
   $date = $form['#node']->field_reservation_date[LANGUAGE_NONE][0]['value'] ? $form['#node']->field_reservation_date[LANGUAGE_NONE][0]['value'] : $form_state['values']['field_reservation_date'][LANGUAGE_NONE][0]['value'];
   if ($date) {
     $return = date('n/d', strtotime($date));
-    $form_state['redirect'] = array('room_reservations/' . $return, array('fragment' => $anchor));
+    //$form_state['redirect'] = array('room_reservations/' . $return, array('fragment' => $anchor));
+    $form_state['redirect'] = array('room_reservations/' . $return);
+
   }
 }
 
@@ -538,7 +540,43 @@ function room_reservations_theme() {
         'selected_category',
         'user_reservations',
       ),
-      'file' => '/view/room_reservations_calendar.view.inc',
+      'template' => 'room-reservations',
+      'file' => '/includes/room_reservations.display.inc',
+    ),
+    'room_category' => array(
+      'variables' => array(
+        'dates',
+        'categories',
+        'hours',
+        'building_hours',
+        'building_hours_display',
+        'rooms',
+        'selected_category',
+        'user_reservations',
+      ),
+      'template' => 'room-reservations--room-category',
+      'file' => '/includes/room_reservations.display.inc',
+    ),
+    'room_reservations__room' => array(
+      'variables' => array(
+        'dates',
+        'categories',
+        'hours',
+        'building_hours',
+        'building_hours_display',
+        'user_reservations',
+      ),
+      'template' => 'room-reservations--room',
+      'file' => '/includes/room_reservations.display.inc',
+    ),
+    'room_reservations__slot' => array(
+      'variables' => array(
+        'dates',
+        'hours',
+        'user_reservations',
+      ),
+      'template' => 'room-reservations--slot',
+      'file' => '/includes/room_reservations.display.inc',
     ),
   );
 }
@@ -823,4 +861,53 @@ function room_reservations_import_from_outlook() {
     $wrapper->field_reservation_repeat_type->set('1');
   }
   $wrapper->save();
+}
+
+/**
+ *  Generates an iCal file for the event.
+  * Usage
+ * -----
+ * Basic usage - generate ics file contents (see below for available properties):
+ *   $ics = new ICS($props);
+ *   $ics_file_contents = $ics->to_string();
+ *
+ * Setting properties after instantiation
+ *   $ics = new ICS();
+ *   $ics->set('summary', 'My awesome event');
+ *
+ * You can also set multiple properties at the same time by using an array:
+ *   $ics->set(array(
+ *     'dtstart' => 'now + 30 minutes',
+ *     'dtend' => 'now + 1 hour'
+ *   ));
+ *
+ * Available properties
+ * --------------------
+ * description
+ *   String description of the event.
+ * dtend
+ *   A date/time stamp designating the end of the event. You can use either a
+ *   DateTime object or a PHP datetime format string (e.g. "now + 1 hour").
+ * dtstart
+ *   A date/time stamp designating the start of the event. You can use either a
+ *   DateTime object or a PHP datetime format string (e.g. "now + 1 hour").
+ * location
+ *   String address or description of the location of the event.
+ * summary
+ *   String short summary of the event - usually used as the title.
+ * url
+ *   A url to attach to the the event. Make sure to add the protocol (http://
+ *   or https://).
+ */
+
+function room_reservations_generate_ical($node) {
+  module_load_include('inc', 'room_reservations', 'room_reservations.ical');
+  $wrapped = entity_metadata_wrapper($node->type, $node);
+  $start = $wrapped->field_reservation_date->value();
+  $props = array(
+    'description' => check_plain($node->body->value()),
+  );
+  echo $start;
+//  $ics = new ICS($props);
+  
 }
