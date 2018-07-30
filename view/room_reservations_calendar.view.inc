@@ -167,7 +167,7 @@ function theme_room_reservations($variables) {
    
     // Available hours column.
     foreach ($hours as $time_slot) {
-      $time_display = ($time_slot['class'] == 'odd') ? t($time_slot['display']) : "";
+      $time_display = ($time_slot['class'] == 'odd') ? t($time_slot['display']) : "&nbsp;";
       $table[$r][$c] = "<td class='" . $time_slot['class'] . " timeslot' time='" . $time_slot['time'] . "' " . '>' . $time_display . '</td>';
       $r++;
     }
