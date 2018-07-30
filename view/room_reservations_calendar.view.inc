@@ -255,7 +255,8 @@ function theme_room_reservations($variables) {
               $link = $id ? l($reservations[$rid][$time]['name'], 'node/' . $id . '/edit', 
                 array('attributes' => array(
                   'title' => $reservations[$rid][$time]['name'],
-                  'class' => 'booking-span')
+//                  'class' => 'booking-span',
+                  )
                 )
               ) : '';
             }
@@ -278,14 +279,14 @@ function theme_room_reservations($variables) {
           $custom_class = '';
           drupal_alter('room_reservations_custom_class', $custom_class, $reservations[$rid][$time]);
                    
-          // add div wrapper to display better
-          $link = $link ? '<div class="booking-span">' . $link . '</div>' : '';
-          
           // we used book class to determine if linked or not; which we needed for pre/post slots as well as actual reservation slots
           // but we don't want to show booked class now for the slots which are just buffer slots
           if (stristr($slotclass, 'setup')) {
             $booked_class = '';
           }
+          // add div wrapper to display better
+          $link = $link ? '<div class="booking-span ' . $slotclass . '">' . $link . '</div>' : '';
+          
           $table[$r][$c] = "<td class='reservation-slot " . $slotclass . ' ' . $booked_class . ' ' . $custom_class . ' ' . $viewable_class .  ' ' . $widthclass. "'>" . $link . "</td>";
         }
         // Room name and capacity.

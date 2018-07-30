@@ -202,8 +202,10 @@
 #rooms-calendar .calendar-header .field-name-field-reservations-equipment .field-item {
   display: block;
 }
-.field-name-field-reservations-room-food-ok .field-item {
-  font-size: .95em;
+#rooms-calendar .calendar-header .field-type-taxonomy-term-reference .field-item a {
+  padding: initial;
+  border: none;
+  margin: 0;
 }
 .page-room-reservations .form-item label {
   display: inline;

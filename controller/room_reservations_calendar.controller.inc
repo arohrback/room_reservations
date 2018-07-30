@@ -21,7 +21,7 @@ function room_reservations($selected_month = NULL, $selected_day = NULL) {
   
   // dates are now keyed by Room ID; but we only need anyone of these to build calendar but make sure its the one which starts earliest
   $datesbyrid = _room_reservations_dates($selected_month, $selected_day);
-  $category_vocab = taxonomy_vocabulary_machine_name_load('conference_room_type');
+  $category_vocab = taxonomy_vocabulary_machine_name_load('conference_room_types');
   $categories = taxonomy_get_tree($category_vocab->vid);
   
   // if no Categories left; we should not bother with the rest of this
