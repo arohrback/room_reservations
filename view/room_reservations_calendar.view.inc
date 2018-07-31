@@ -63,7 +63,6 @@ function theme_room_reservations($variables) {
   $building_hours_display = $variables['building_hours_display'];
   $rooms = $variables['rooms'];
   $user_reservations = $variables['user_reservations'];
-
   // User information.
   $full_access = FALSE;
   $user_login_name = NULL;
@@ -285,11 +284,10 @@ function theme_room_reservations($variables) {
             $booked_class = '';
           }
           // add div wrapper to display better
-          $link = $link ? '<div class="booking-span ' . $slotclass . '">' . $link . '</div>' : '';
+          $link = '<div class="booking-span ' . $slotclass . '">' . ($link ? $link : '&nbsp;') . '</div>';
           
           $table[$r][$c] = "<td class='reservation-slot " . $slotclass . ' ' . $booked_class . ' ' . $custom_class . ' ' . $viewable_class .  ' ' . $widthclass. "'>" . $link . "</td>";
         }
-        // Room name and capacity.
       }
     }
     
