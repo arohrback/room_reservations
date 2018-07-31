@@ -176,7 +176,7 @@
   background-color: #eee;
 }
 
-#rooms-calendar .panel .gcolumns div.closed {
+#rooms-calendar .panel .gcolumns td.closed {
   background-color: #d1dfdf;
 /*  border: 1px solid #d1dfdf; */
 }
