@@ -330,3 +330,10 @@
   font-size: .8em;
   padding: 2px 4px;
 }
+td.room-info {
+  vertical-align:top;
+}
+.reservation-slot a {
+  font-size: .8em;
+  font-weight: 700;
+}
